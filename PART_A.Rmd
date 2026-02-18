@@ -60,6 +60,7 @@ pred = factor(pred, levels = levels(testing$y))
 ```{r}
 library(caret)
 confusionMatrix(pred, testing$y, positive = "yes")
+#testing
 ```
 
 
