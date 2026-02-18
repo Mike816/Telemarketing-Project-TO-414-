@@ -9,22 +9,65 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+### Reading Data and Data Cleaning
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r}
+my_data = read.csv("tele.csv")
+str(my_data)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+# Add new flag of whether the customer was contacted
+#my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
 
-```{r cars}
-summary(cars)
+removes = c("X", "duration") # duration is unknown when calling
+to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
+
+my_data[removes] = NULL
+my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
+
+
+summary(my_data)
 ```
 
-## Including Plots
+### Split Data into training and testing
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+ratio = 0.7
+set.seed(12345) 
+train_rows = sample(1:nrow(my_data), ratio*nrow(my_data))
+training = my_data[train_rows, ]
+testing = my_data[-train_rows, ]
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+### Logistic model creation
+
+```{r}
+linear_model = glm(y ~ ., data = training, family = binomial)
+stepmodel = step(linear_model, direction = "backward", trace = 0)
+```
+
+### Make predictions
+
+```{r}
+prob = predict(stepmodel, testing, type = "response")
+pred = ifelse(prob >= 0.5, "yes", "no")
+pred = factor(pred, levels = levels(testing$y))
+```
+
+### Evaluation
+
+```{r}
+library(caret)
+confusionMatrix(pred, testing$y, positive = "yes")
+```
+
+
+
+
+
+
+
+
+
+
+
+
