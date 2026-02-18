@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 my_data = read.csv("tele.csv")
 str(my_data)
-
+#testing my own branch
 # Add new flag of whether the customer was contacted
 #my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
 
