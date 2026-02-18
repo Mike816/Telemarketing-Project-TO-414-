@@ -20,6 +20,7 @@ str(my_data)
 
 ## ciao
 # random line
+#test2
 removes = c("X", "duration") # duration is unknown when calling
 to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
 
