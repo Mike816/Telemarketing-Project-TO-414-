@@ -18,7 +18,7 @@ str(my_data)
 # Add new flag of whether the customer was contacted
 #my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
 
-## ciao
+## ciao ciao
 # random line
 removes = c("X", "duration") # duration is unknown when calling
 to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
