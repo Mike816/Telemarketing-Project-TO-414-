@@ -44,9 +44,19 @@ testing = my_data[-train_rows, ]
 ### Logistic model creation
 
 ```{r}
+# what is y? 
 linear_model = glm(y ~ ., data = training, family = binomial)
 stepmodel = step(linear_model, direction = "backward", trace = 0)
 ```
+
+### Logistic model creation 
+
+```{r}
+full_stepmodel = step(linear_model, direction = "backward")
+saveRDS(full_stepmodel, file = "full_stepmodel.rds")
+loaded_full_stepmodel <- readRDS("full_stepmodel.rds")
+```
+
 
 ### Make predictions
 
@@ -61,7 +71,7 @@ pred = factor(pred, levels = levels(testing$y))
 ```{r}
 library(caret)
 confusionMatrix(pred, testing$y, positive = "yes")
-#testing
+
 ```
 
 
