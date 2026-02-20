@@ -1,0 +1,91 @@
+---
+title: "KNN"
+author: "Daniel Myung"
+date: "2026-02-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+tele <- read.csv("tele.csv", stringsAsFactors = TRUE)
+
+tele$X <- NULL
+tele$duration <- NULL
+
+tele$telepcalled <-ifelse(tele$pdays == 999, 0,1)
+  
+
+str(tele)
+summary(tele)
+```
+
+
+```{r}
+
+tele_d <- as.data.frame(model.matrix(~ . -1, data = tele))
+
+library(janitor)
+
+tele_d <- clean_names(tele_d)
+
+str(tele_d)
+
+minmax <- function(x){
+  (x - min(x)) / (max(x) - min(x))
+}
+
+#normalized data
+tele_n <- as.data.frame(lapply(tele_d, minmax))
+
+summary(tele_n)
+```
+
+
+### Step 3: Split Data
+
+```{r}
+set.seed(12345)
+ratio <- 0.7
+
+train_rows <- sample(1:nrow(tele_n), ratio*nrow(tele_n))
+
+tele_train <- tele_n[train_rows, ]
+tele_test <- tele_n[-train_rows, ]
+
+```
+
+```{r}
+library(class)
+
+#all rows, all rows except last one (y value)
+#telco_train[,-ncol(telco_train)]
+
+#similarly, all rows, all rows except last one (y value)
+#telco_test[,-ncol(telco_test)]
+
+#this works because the y value is sitting in the LAST column
+
+#cl stands for classification label 0 or 1 (the y value)
+
+# outputs prediction for the test data. Both builds model and uses it
+
+
+tele_pred <- knn(train = tele_train[,(-ncol(tele_train)-1)],
+                  test = tele_test[,(-ncol(tele_test)-1)],
+                  cl = tele_train[,(ncol(tele_train)-1)],
+                  k = 11)
+
+```
+
+### Step 6: Evaluate your prediction
+
+```{r}
+library(caret)
+
+confusionMatrix(as.factor(tele_pred), as.factor(tele_test$y), positive = "1")
+```
+
