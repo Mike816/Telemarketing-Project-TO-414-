@@ -16,12 +16,12 @@ my_data = read.csv("tele.csv")
 str(my_data)
 
 # Add new flag of whether the customer was contacted
-#my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
+my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
 
 ## ciao
 # random line
 #test2
-removes = c("X", "duration") # duration is unknown when calling
+removes = c("X", "duration", "pdays") # duration is unknown when calling
 to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
 
 my_data[removes] = NULL
@@ -58,18 +58,21 @@ clustering_dummy$size
 clustering_dummy$centers
 
 clustering_telemarketing$ClusterNumber <- clustering_dummy$cluster
+
+# defined features
+features <- clustering_telemarketing[, setdiff(names(clustering_telemarketing),
+                                               "ClusterNumber")]
+
 tapply(clustering_telemarketing$y,clustering_telemarketing$ClusterNumber, mean)
 # it seems that cluster 4 has the highest call success rate (26%)
 
 tapply(clustering_telemarketing$age,clustering_telemarketing$ClusterNumber, mean)
-
 
 ```
 
 # clustering visualization
 
 ```{r}
-
 
 # Identify binaries (0/1 vars)
 binary_vars <- sapply(features, function(x) length(unique(x[!is.na(x)])) == 2 && 
@@ -89,6 +92,9 @@ library(ggplot2); library(reshape2)
 data_long <- melt(clustering_telemarketing[, c(names(features), "ClusterNumber")], 
                   id.vars = "ClusterNumber")
 
+
+
+```
 ggplot(data_long, aes(x = factor(ClusterNumber), y = value)) +
   facet_wrap(~ Variable, scales = "free") +
   geom_boxplot(data = subset(data_long, !Variable %in% names(features)[binary_vars])) +
@@ -96,5 +102,7 @@ ggplot(data_long, aes(x = factor(ClusterNumber), y = value)) +
            stat = "summary", fun = "mean", fill = "steelblue") +
   labs(title = "Cluster Profiles: Boxplots (Continuous) + Means (Binary)")
 
+calculate profitability from profitable cluster compared to calling all the clusters (10% success)
+find strategy based on each method -> pick the best result 
 
-```
+

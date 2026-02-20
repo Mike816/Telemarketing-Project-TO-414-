@@ -21,7 +21,7 @@ str(my_data)
 ## ciao
 # random line
 #test2
-removes = c("X", "duration") # duration is unknown when calling
+removes = c("X", "duration", "pdays") # duration is unknown when calling
 to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
 
 my_data[removes] = NULL
@@ -30,6 +30,36 @@ my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
 
 summary(my_data)
 ```
+# convert binary
+```{r}
+# Identify binary factors (2 levels: "yes"/"no" or "no"/"unknown")
+binary_factors <- sapply(my_data, function(x) is.factor(x) && nlevels(x) == 2)
+
+# Convert to 0/1 numeric (yes=1, no=0)
+for(col in names(my_data)[binary_factors]) {
+  my_data[[col]] <- ifelse(my_data[[col]] == "yes", 1, 0)
+}
+
+# Verify
+str(my_data[, names(my_data)[binary_factors]])
+```
+
+# equation verification
+
+```{r}
+success_rate <- 0.12
+baseline <- 0.11
+
+retention <- 1000+((success_rate - baseline)*10000)
+#print(retention)
+whole_training_cost <- 1000
+
+training_cost_per_call <- whole_training_cost/retention
+
+print(training_cost_per_call)
+```
+
+
 
 ### Split Data into training and testing
 
@@ -46,13 +76,71 @@ testing = my_data[-train_rows, ]
 ```{r}
 # what is y? 
 linear_model = glm(y ~ ., data = training, family = binomial)
-stepmodel = step(linear_model, direction = "backward", trace = 0)
+#stepmodel = step(linear_model, direction = "backward", trace = 0)
 ### Logistic model creation 
 
 
 full_stepmodel = step(linear_model, direction = "backward")
-saveRDS(full_stepmodel, file = "full_stepmodel.rds")
-loaded_full_stepmodel <- readRDS("full_stepmodel.rds")
+saveRDS(full_stepmodel, file = "full_stepmodel_without_pdays.rds")
+loaded_full_stepmodel <- readRDS("full_stepmodel_without_pdays.rds")
+
+library(caret)
+pred_class <- predict(loaded_full_stepmodel, testing, type = "response")
+pred_factor <- ifelse(pred_class > 0.2, "yes", "no")
+pred_factor <- factor(pred_factor, levels = levels(training$y))
+
+confusionMatrix(pred_factor, testing$y, positive = "yes")
+
+```
+
+
+
+# fine tuning
+```{r}
+library(caret)
+
+# Get predictions once
+pred_probs <- predict(loaded_full_stepmodel, testing, type = "response")
+
+# Define levels from your data (this was missing)
+y_levels <- levels(training$y)  # or levels(testing$y)
+
+# Initialize tracking
+best_profit <- -Inf
+best_thresh <- NULL
+best_cm <- NULL
+
+# Loop over thresholds 0.00 to 1.00
+for(thresh in seq(0.00, 1.00, by = 0.01)) {
+  # Classify predictions
+  sorted_pred <- ifelse(pred_probs >= thresh, "yes", "no")
+  pred_factor <- factor(sorted_pred, levels = y_levels)
+  
+  # Confusion matrix
+  cm <- confusionMatrix(pred_factor, testing$y, positive = "yes")
+  
+  # Extract counts from table
+  tbl <- cm$table
+  TP <- as.numeric(tbl[2,2])  # Predicted Yes, Actual Yes
+  FP <- as.numeric(tbl[1,2])  # Predicted Yes, Actual No  
+  FN <- as.numeric(tbl[2,1])  # Predicted No, Actual Yes
+  
+  # Calculate profit: 10*TP - 2*(FP + FN)
+  profit <- 10 * TP - 2 * (FP + FN)
+  
+  # Track best
+  if(profit > best_profit) {
+    best_profit <- profit
+    best_thresh <- thresh
+    best_cm <- cm
+  }
+}
+
+# Results
+cat("BEST PROFIT:", round(best_profit, 2), "at threshold:", best_thresh, "\n")
+print(best_cm)
+cat("Calls made (FP+TP):", best_cm$table[2,1] + best_cm$table[2,2], "\n")
+
 ```
 
 # clustering
