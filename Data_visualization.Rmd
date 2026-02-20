@@ -32,10 +32,14 @@ summary(my_data)
 
 **Current profitability**
 ```{r}
-cost_per_call = 2 #1 per varible cost, another 1 for employee training on average
 reward_per_success = 10
+training_cost = 1000
+base_call_cost = 1
 
 rates = seq(0.05, 1, by = 0.05)
+
+calls_before_quit = 1000 + pmax(0, (rates - 0.11) * 10000)
+cost_per_call = base_call_cost + training_cost / calls_before_quit
 
 percent_profit = ((rates * reward_per_success - cost_per_call) / cost_per_call) * 100
 
@@ -60,32 +64,29 @@ ggplot(profit_df, aes(success_rate, percent_profit)) +
   )
 ```
 
-As shown in the figure above, the percent profitability per call increases linearly with the success rate. Since the break even success rate is 20%, any call with more than a 20% chance of success will generate profit. Therefore, we should make any call if the customer has 20% or more probability to buy our product. 
+As shown in the figure above, the percent profitability per call increases approximately linearly with the success rate. Since the break even success rate is 20%, any call with more than a 20% chance of success will generate profit. Therefore, we should make any call if the customer has 20% or more probability to buy our product. 
 
 However, this is not the case with our firm currently. This is where our profitability current exists.
 ```{r}
-actual_rate <- mean(my_data$y == "yes")
-actual_profit <- ((actual_rate * reward_per_success - cost_per_call) / cost_per_call) * 100
+actual_rate = mean(my_data$y == "yes")
+
+actual_calls = 1000 + pmax(0, (actual_rate - 0.11) * 10000)
+actual_cost_per_call = base_call_cost + training_cost / actual_calls
+
+actual_profit = ((actual_rate * reward_per_success - actual_cost_per_call) / actual_cost_per_call) * 100
 
 ggplot(profit_df, aes(success_rate, percent_profit)) +
   geom_line(linewidth = 1) +
   geom_point() +
   geom_hline(yintercept = 0, linetype = "dashed") +
-
-  # actual performance line
-  geom_hline(yintercept = actual_profit,
-             color = "red",
-             linetype = "dotted",
-             linewidth = 1.2) +
-
+  geom_hline(yintercept = actual_profit, color = "red", linetype = "dotted", linewidth = 1.2) +
   annotate("text",
            x = 0.8,
            y = actual_profit,
-           label = paste0("Actual profit = ", round(actual_profit,1), "%"),
+           label = paste0("Actual profit = ", round(actual_profit, 1), "%"),
            color = "red",
-           vjust = -1) +
-
-  scale_x_continuous(labels = scales::percent) +
+           vjust = 1.5) +
+  scale_x_continuous(labels = percent) +
   scale_y_continuous(labels = function(x) paste0(x, "%")) +
   labs(
     title = "Percent Profit per Call vs Success Rate",
@@ -94,7 +95,7 @@ ggplot(profit_df, aes(success_rate, percent_profit)) +
   )
 ```
 
-Our calls have a 11% success rate, which equates to a -43.7% loss per call made. From a purely monetary perspective, with a success rate this low, the optimal course of action is to not make any calls at all until we can increase our success rate per call to at least 20%.
+Our calls have a 11% success rate, which equates to a -42.9% loss per call made. From a purely monetary perspective, with a success rate this low, the optimal course of action is to not make any calls at all until we can increase our success rate per call to at least 20%.
 
 We believe we can achieve this by clustering our customer base into several groups, and only focus on calling those with a >20% succuss rate. We can also make a prediction model to determine if a call meets the critieria before we make the call to maximize our profit. We will explore both of these approachs and their predicited outcomes in the following sections.
 
@@ -108,7 +109,7 @@ library(tidyr)
 
 ## We want to check whether there is a strong relationship between y and the other variables by looking at the correlation heatmap.To make this possible, we first recode y as a binary variable (0 for no, 1 for yes) and then include this binary version of y in the correlation matrix that we plot as a heatmap.
 
-my_data$y_bin <- ifelse(my_data$y == "yes", 1, 0)
+my_data$y_bin = ifelse(my_data$y == "yes", 1, 0)
 
 num_vars = c("y_bin","age","campaign","previous", "emp.var.rate","cons.price.idx","cons.conf.idx","euribor3m","nr.employed")
 
