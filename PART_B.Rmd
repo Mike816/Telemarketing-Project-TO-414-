@@ -11,19 +11,59 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r}
-my_data = read.csv("tele.csv")
-str(my_data)
+# my_data <- read.csv("tele.csv")
 
+my_data <- read.csv("tele.csv", stringsAsFactors = TRUE)
 # Add new flag of whether the customer was contacted
 #my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
 
 
-removes = c("X", "duration") # duration is unknown when calling
-to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
+#removes = c("X", "duration") # duration is unknown when calling
+#to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
 
-my_data[removes] = NULL
-my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
+my_data$X <- NULL
+my_data$duration <- NULL
+my_data$telepcalled <-ifelse(tele$pdays == 999, 0,1)
+  
+#my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
 
-
+str(my_data)
 summary(my_data)
 ```
+
+```{r}
+outcome <- my_data$y
+
+numeric_outcome <- ifelse(outcome == "yes", 1, 0)
+
+#turning factors into numerical values
+my_data <- as.data.frame(model.matrix(~.-1, data = my_data))
+
+
+minmax <- function(x){
+  (x - min(x)) / (max(x) - min(x))
+}
+
+
+## KILLS NA VALUES
+int_minmax <- as.data.frame(lapply(my_data, minmax))
+
+set.seed(12345)
+c5 <- kmeans(int_minmax, 5)
+c5$size
+c5$centers
+
+
+## CALCULATING AVERAGE CHURN RATES FOR EACH CLUSTER
+
+my_data$cluster_assignments <- c5$cluster
+
+tapply(numeric_outcome, my_data$cluster_assignments, mean)
+
+
+```
+
+Will we save money 
+If we were to not chase and focus on specific groups will we be more profitable 
+
+Part C: Find most profitable model or combine them all

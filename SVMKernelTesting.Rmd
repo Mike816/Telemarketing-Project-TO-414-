@@ -1,0 +1,95 @@
+---
+title: "SVMKernelTest"
+author: "Daniel Myung, Steven Liu, Riccardo Ferrari, Andrea Demelas, Ye Tianci"
+date: "2026-02-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# my_data <- read.csv("tele.csv")
+
+tele <- read.csv("tele.csv", stringsAsFactors = TRUE)
+
+tele$X <- NULL
+tele$duration <- NULL
+
+tele$telepcalled <-ifelse(tele$pdays == 999, 0,1)
+  
+#my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
+
+str(tele)
+summary(tele)
+```
+```{r, cache = TRUE}
+ratio <- 0.7
+set.seed(12345)
+train_rows <- sample(1:nrow(tele), ratio*nrow(tele))
+
+tele_train <- tele[train_rows,]
+tele_test <- tele[-train_rows,]
+
+library(kernlab)
+
+# radial basis rbfdot
+#tanhdotmodel <- ksvm(y ~ ., data = tele_train, kernel = "tanhdot")
+#polydotmodel <- ksvm(y ~ ., data = tele_train, kernel = "polydot")
+#vanilladotmodel <- ksvm(y ~ ., data = tele_train, kernel = "vanilladot")
+#aplacedotmodel <- ksvm(y ~ ., data = tele_train, kernel = "laplacedot")
+#besseldotmodel <- ksvm(y ~ ., data = tele_train, kernel = "besseldot")
+#anovadotmodel <- ksvm(y ~ ., data = tele_train, kernel = "anovadot")
+#splinedotmodel <- ksvm(y ~ ., data = tele_train, kernel = "splinedot")
+
+splinedotmodel <- ksvm(y ~ ., data = tele_train, kernel = "rbfdot")
+saveRDS(tanhdotmodel, file = "rbf_model.rds")
+
+#saveRDS(tanhdotmodel, file = "tanhdot.rds")
+#saveRDS(polydotmodel, file = "polydot.rds")
+#saveRDS(vanilladotmodel, file = "vanilla.rds")
+#saveRDS(laplacedotmodel, file = "laplace.rds")
+#saveRDS(besseldotmodel, file = "bessel.rds")
+#saveRDS(anovadotmodel, file = "anova.rds")
+#saveRDS(splinedotmodel, file = "splinedot.rds")
+
+
+loaded_tan <- readRDS(file = "tanhdot.rds")
+loaded_poly <- readRDS(file = "polydot.rds")
+loaded_vanilla <- readRDS(file = "vanilla.rds")
+loaded_laplace <- readRDS(file = "laplace.rds")
+loaded_bessel <- readRDS(file = "bessel.rds")
+loaded_anova <- readRDS(file = "anova.rds")
+loaded_spline <- readRDS(file = "splinedot.rds")
+loaded_rbf <- readRDS(file = "rbf_model.rds")
+
+
+tanh_pred <- predict(loaded_tan, tele_test)
+poly_pred <- predict(loaded_poly, tele_test)
+v_pred <- predict(loaded_vanilla, tele_test)
+l_pred <- predict(loaded_laplace, tele_test)
+b_pred <- predict(loaded_bessel, tele_test)
+a_pred <- predict(loaded_anova, tele_test)
+s_pred <- predict(loaded_spline, tele_test)
+rbf_pred  <- predict(loaded_rbf, tele_test)
+
+
+#table(v_pred, tele_test$y)
+
+## NOT A BINARY PREDICTION, so don't use confusion matrix
+
+## this time, use confusion matrix because this is a binary prediction
+library(caret)
+confusionMatrix(as.factor(tanh_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(poly_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(v_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(l_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(b_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(a_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(s_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(rbf_pred), as.factor(tele_test$y), positive = "yes")
+```
+
+Our group split up running the models on our own machines and saved them to files so that we could run things faster. Our group ran the predictions for all the kernels except stringdot, and found that the sensitivity was highest for RBF. We want a higher sensitivity because we are particularly interested in finding the most successful calls.
+
