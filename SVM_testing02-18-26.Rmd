@@ -1,0 +1,60 @@
+---
+title: "SVM_testing02-18-26DanielSteven"
+output: html_document
+---
+
+```{r}
+my_data = read.csv("tele.csv")
+str(my_data)
+
+# Add new flag of whether the customer was contacted
+#my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
+
+removes = c("X", "duration") # duration is unknown when calling
+to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
+
+my_data[removes] = NULL
+my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
+
+
+summary(my_data)
+```
+
+# split
+
+```{r}
+ratio = 0.7
+set.seed(12345) 
+train_rows = sample(1:nrow(my_data), ratio*nrow(my_data))
+training = my_data[train_rows, ]
+testing = my_data[-train_rows, ]
+```
+
+# SVM 
+
+```{r}
+library(kernlab)
+
+# y is the outcome we want to predict 
+
+# svm_model <- ksvm(y ~ ., data = training, kernel = "vanilladot") 
+# saved_vanilla_SVM <- saveRDS(svm_model, "vanilla_SVM.rds")
+loaded_vanilla_SVM <- readRDS(file = "vanilla_SVM.rds")
+
+vanilla_pred <- predict(loaded_vanilla_SVM, testing)
+
+library(caret)
+
+confusionMatrix(as.factor(vanilla_pred), as.factor(testing$y), positive = "yes")
+
+# loaded_polydot_model <- readRDS(file = "polydot")
+# str(loaded_polydot_model)
+# polydot_pred <- predict(loaded_polydot_model, testing)
+
+# confusionMatrix(as.factor(polydot_pred), as.factor(testing$y), positive = "yes")
+
+```
+The vanilla one is not the best. My group ran the other models, and we determined RBF being the best model, both for accuracy and sensitivity.  
+
+
+

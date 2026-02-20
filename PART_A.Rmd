@@ -47,15 +47,71 @@ testing = my_data[-train_rows, ]
 # what is y? 
 linear_model = glm(y ~ ., data = training, family = binomial)
 stepmodel = step(linear_model, direction = "backward", trace = 0)
-```
-
 ### Logistic model creation 
 
-```{r}
+
 full_stepmodel = step(linear_model, direction = "backward")
 saveRDS(full_stepmodel, file = "full_stepmodel.rds")
 loaded_full_stepmodel <- readRDS("full_stepmodel.rds")
 ```
+
+# clustering
+
+```{r}
+clustering_telemarketing <- as.data.frame(model.matrix(~.-1, data = my_data))
+
+minmax <- function(x){
+	(x - min(x)) / (max(x) - min(x))
+}
+
+int.minmax <- as.data.frame(lapply(clustering_telemarketing, minmax))
+
+set.seed(12345)
+clustering_dummy <- kmeans(int.minmax, 5)
+clustering_dummy$size
+clustering_dummy$centers
+
+clustering_telemarketing$ClusterNumber <- clustering_dummy$cluster
+tapply(clustering_telemarketing$y,clustering_telemarketing$ClusterNumber, mean)
+# it seems that cluster 4 has the highest call success rate (26%)
+
+tapply(clustering_telemarketing$age,clustering_telemarketing$ClusterNumber, mean)
+
+
+```
+# clustering visualization
+```{r}
+
+
+# Identify binaries (0/1 vars)
+binary_vars <- sapply(features, function(x) length(unique(x[!is.na(x)])) == 2 && 
+                      all(unique(x[!is.na(x)]) %in% c(0,1)))
+continuous_vars <- names(features)[!binary_vars]
+
+# Then plot separately
+for(var in names(features)[binary_vars]) {
+  barplot(tapply(clustering_telemarketing[[var]], clustering_telemarketing$ClusterNumber, mean),
+          main = var, ylab = "Proportion")
+}
+for(var in continuous_vars) {
+  boxplot(clustering_telemarketing[[var]] ~ clustering_telemarketing$ClusterNumber,
+          main = var)
+}
+library(ggplot2); library(reshape2)
+data_long <- melt(clustering_telemarketing[, c(names(features), "ClusterNumber")], 
+                  id.vars = "ClusterNumber")
+
+ggplot(data_long, aes(x = factor(ClusterNumber), y = value)) +
+  facet_wrap(~ Variable, scales = "free") +
+  geom_boxplot(data = subset(data_long, !Variable %in% names(features)[binary_vars])) +
+  geom_col(data = subset(data_long, Variable %in% names(features)[binary_vars]), 
+           stat = "summary", fun = "mean", fill = "steelblue") +
+  labs(title = "Cluster Profiles: Boxplots (Continuous) + Means (Binary)")
+
+
+```
+
+
 
 
 ### Make predictions

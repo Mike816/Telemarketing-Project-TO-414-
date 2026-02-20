@@ -1,0 +1,100 @@
+---
+title: "ClusteringAnalysisSteven"
+author: "SL"
+date: "2026-02-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Read and clean data 
+
+```{r}
+my_data = read.csv("tele.csv")
+str(my_data)
+
+# Add new flag of whether the customer was contacted
+#my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
+
+## ciao
+# random line
+#test2
+removes = c("X", "duration") # duration is unknown when calling
+to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
+
+my_data[removes] = NULL
+my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
+
+
+summary(my_data)
+```
+
+### Split Data into training and testing
+
+```{r}
+ratio = 0.7
+set.seed(12345) 
+train_rows = sample(1:nrow(my_data), ratio*nrow(my_data))
+training = my_data[train_rows, ]
+testing = my_data[-train_rows, ]
+```
+
+# clustering
+
+```{r}
+clustering_telemarketing <- as.data.frame(model.matrix(~.-1, data = my_data))
+
+minmax <- function(x){
+	(x - min(x)) / (max(x) - min(x))
+}
+
+int.minmax <- as.data.frame(lapply(clustering_telemarketing, minmax))
+
+set.seed(12345)
+clustering_dummy <- kmeans(int.minmax, 5)
+clustering_dummy$size
+clustering_dummy$centers
+
+clustering_telemarketing$ClusterNumber <- clustering_dummy$cluster
+tapply(clustering_telemarketing$y,clustering_telemarketing$ClusterNumber, mean)
+# it seems that cluster 4 has the highest call success rate (26%)
+
+tapply(clustering_telemarketing$age,clustering_telemarketing$ClusterNumber, mean)
+
+
+```
+
+# clustering visualization
+
+```{r}
+
+
+# Identify binaries (0/1 vars)
+binary_vars <- sapply(features, function(x) length(unique(x[!is.na(x)])) == 2 && 
+                      all(unique(x[!is.na(x)]) %in% c(0,1)))
+continuous_vars <- names(features)[!binary_vars]
+
+# Then plot separately
+for(var in names(features)[binary_vars]) {
+  barplot(tapply(clustering_telemarketing[[var]], clustering_telemarketing$ClusterNumber, mean),
+          main = var, ylab = "Proportion")
+}
+for(var in continuous_vars) {
+  boxplot(clustering_telemarketing[[var]] ~ clustering_telemarketing$ClusterNumber,
+          main = var)
+}
+library(ggplot2); library(reshape2)
+data_long <- melt(clustering_telemarketing[, c(names(features), "ClusterNumber")], 
+                  id.vars = "ClusterNumber")
+
+ggplot(data_long, aes(x = factor(ClusterNumber), y = value)) +
+  facet_wrap(~ Variable, scales = "free") +
+  geom_boxplot(data = subset(data_long, !Variable %in% names(features)[binary_vars])) +
+  geom_col(data = subset(data_long, Variable %in% names(features)[binary_vars]), 
+           stat = "summary", fun = "mean", fill = "steelblue") +
+  labs(title = "Cluster Profiles: Boxplots (Continuous) + Means (Binary)")
+
+
+```
