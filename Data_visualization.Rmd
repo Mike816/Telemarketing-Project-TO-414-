@@ -1,0 +1,78 @@
+---
+title: "Data Visualization"
+author: "MIKE"
+date: "2026-02-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Reading Data and Data Cleaning
+
+```{r}
+my_data = read.csv("tele.csv")
+str(my_data)
+
+# Add new flag of whether the customer was contacted
+#my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
+
+removes = c("X", "duration") # duration is unknown when calling
+to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
+
+my_data[removes] = NULL
+my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
+
+
+summary(my_data)
+```
+
+### Data Visualization
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(scales)
+library(tidyr)
+
+num_vars = c("age","campaign","pdays","previous", "emp.var.rate","cons.price.idx","cons.conf.idx","euribor3m","nr.employed")
+
+num_df = my_data %>% select(all_of(num_vars))
+corr = cor(num_df, use="pairwise.complete.obs")
+
+corr_long = as.data.frame(as.table(corr)) %>%
+  rename(var1 = Var1, var2 = Var2, r = Freq)
+
+ggplot(corr_long, aes(var1, var2, fill=r)) +
+  geom_tile() +
+  coord_equal() + #square grid
+  theme(axis.text.x = element_text(angle=45, hjust=1)) + #rotates the bottom labels to prevent overlap
+  labs(title="Correlation heatmap", x=NULL, y=NULL)
+
+```
+
+## Numerical Varibles
+```{r}
+for (v in num_vars) {
+  p <- ggplot(my_data, aes(x = .data[[v]])) +
+    geom_histogram(bins = 40, fill = "steelblue", color = "white") +
+    labs(title = paste("Distribution of", v), x = v, y = "Count")
+  print(p)
+}
+```
+
+## Categorical Varibles
+```{r}
+cat_vars <- setdiff(names(my_data), num_vars)
+
+for (v in cat_vars) {
+  p <- ggplot(my_data, aes(x = .data[[v]])) +
+    geom_bar(fill = "darkorange") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    labs(title = paste("Distribution of", v), x = v, y = "Count")
+  print(p)
+}
+```
+
+
