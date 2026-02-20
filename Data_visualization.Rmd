@@ -30,49 +30,70 @@ summary(my_data)
 
 ### Data Visualization
 
+**Current profitability**
 ```{r}
+cost_per_call = 2
+reward_per_success = 10
+
+rates = seq(0.05, 1, by = 0.05)
+
+percent_profit = ((rates * reward_per_success - cost_per_call) / cost_per_call) * 100
+
+profit_df = data.frame(
+  success_rate = rates,
+  percent_profit = percent_profit
+)
+
 library(ggplot2)
-library(dplyr)
 library(scales)
-library(tidyr)
 
-num_vars = c("age","campaign","previous", "emp.var.rate","cons.price.idx","cons.conf.idx","euribor3m","nr.employed")
-
-num_df = my_data %>% select(all_of(num_vars))
-corr = cor(num_df, use="pairwise.complete.obs")
-
-corr_long = as.data.frame(as.table(corr)) %>%
-  rename(var1 = Var1, var2 = Var2, r = Freq)
-
-ggplot(corr_long, aes(var1, var2, fill=r)) +
-  geom_tile() +
-  coord_equal() + #square grid
-  theme(axis.text.x = element_text(angle=45, hjust=1)) + #rotates the bottom labels to prevent overlap
-  labs(title="Correlation heatmap", x=NULL, y=NULL)
-
+ggplot(profit_df, aes(success_rate, percent_profit)) +
+  geom_line(linewidth = 1) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_x_continuous(labels = percent) +
+  scale_y_continuous(labels = function(x) paste0(x, "%")) +
+  labs(
+    title = "Percent Profit per Call vs Success Rate",
+    x = "Success Rate",
+    y = "Percent Profit per Call"
+  )
 ```
 
-## Numerical Varibles
+As shown in the figure above, the percent profitability per call increases linearly with the success rate. Since the break even success rate is 20%, any call with more than a 20% chance of success will generate profit. Therefore, we should make any call if the customer has 20% or more probability to buy our product. 
+
+However, this is not the case with our firm currently. This is where our profitability current exists.
 ```{r}
-for (v in num_vars) {
-  p <- ggplot(my_data, aes(x = .data[[v]])) +
-    geom_histogram(bins = 40, fill = "steelblue", color = "white") +
-    labs(title = paste("Distribution of", v), x = v, y = "Count")
-  print(p)
-}
+actual_rate <- mean(my_data$y == "yes")
+actual_profit <- ((actual_rate * reward_per_success - cost_per_call) / cost_per_call) * 100
+
+ggplot(profit_df, aes(success_rate, percent_profit)) +
+  geom_line(linewidth = 1) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+
+  # actual performance line
+  geom_hline(yintercept = actual_profit,
+             color = "red",
+             linetype = "dotted",
+             linewidth = 1.2) +
+
+  annotate("text",
+           x = 0.8,
+           y = actual_profit,
+           label = paste0("Actual profit = ", round(actual_profit,1), "%"),
+           color = "red",
+           vjust = -1) +
+
+  scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = function(x) paste0(x, "%")) +
+  labs(
+    title = "Percent Profit per Call vs Success Rate",
+    x = "Success Rate",
+    y = "Percent Profit per Call"
+  )
 ```
 
-## Categorical Varibles
-```{r}
-cat_vars <- setdiff(names(my_data), num_vars)
+Our calls have a 11% success rate, which equates to a -43.7% loss per call made. From a purely monetary perspective, with a success rate this low, the optimal course of action is to not make any calls at all until we can increase our success rate per call to at least 20%.
 
-for (v in cat_vars) {
-  p <- ggplot(my_data, aes(x = .data[[v]])) +
-    geom_bar(fill = "darkorange") +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    labs(title = paste("Distribution of", v), x = v, y = "Count")
-  print(p)
-}
-```
-
-
+We believe we can achieve this by clustering our customer base into several groups, and only focus on calling those with a >20% succuss rate. We can also make a prediction model to determine if a call meets the critieria before we make the call to maximize our profit. We will explore both of these approachs and their predicited outcomes in the following sections.
