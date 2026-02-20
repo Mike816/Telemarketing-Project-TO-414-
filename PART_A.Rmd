@@ -18,10 +18,6 @@ str(my_data)
 # Add new flag of whether the customer was contacted
 #my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
 
-## ciao ciao
-# random line
-#test2 
-# test andrea
 removes = c("X", "duration") # duration is unknown when calling
 to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
 
@@ -57,7 +53,7 @@ summary(stepmodel)
 
 ```{r}
 prob = predict(stepmodel, testing, type = "response")
-pred = ifelse(prob >= 0.4, "yes", "no")
+pred = ifelse(prob >= 0.5, "yes", "no")
 pred = factor(pred, levels = levels(testing$y))
 ```
 
