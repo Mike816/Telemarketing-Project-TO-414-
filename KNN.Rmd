@@ -18,6 +18,11 @@ tele$duration <- NULL
 
 tele$telepcalled <-ifelse(tele$pdays == 999, 0,1)
   
+#removes = c("X", "duration") # duration is unknown when calling
+#to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
+
+#tele[removes] = NULL
+#tele[to_be_factors] = lapply(tele[to_be_factors], factor)
 
 str(tele)
 summary(tele)
@@ -77,7 +82,7 @@ library(class)
 tele_pred <- knn(train = tele_train[,(-ncol(tele_train)-1)],
                   test = tele_test[,(-ncol(tele_test)-1)],
                   cl = tele_train[,(ncol(tele_train)-1)],
-                  k = 11)
+                  k = 18)
 
 ```
 
@@ -88,4 +93,47 @@ library(caret)
 
 confusionMatrix(as.factor(tele_pred), as.factor(tele_test$y), positive = "1")
 ```
+We chose to use k=18, because it was a relatively high k value that still gave us good sensitivity. 
+
+```{r}
+## $10 * TP - 2 *(FP + TP) = profit
+# 10 = contribution margin
+# 2 = cost per made per call
+
+successrate <- sum(tele_test[, ncol(tele_test) - 1]) / nrow(tele_test)
+successrate
+
+FN <- 633
+TN <- 10963
+
+TP <- 743
+FP <- 18
+
+profitnothing <- (10 * (FN + TP)) - (2 * (TN + TP + FN + FP))
+
+newsuccessrate <- TP / (TP + FP)
+newsuccessrate
+
+diff <- newsuccessrate - successrate
+diff
+
+newrrate <- diff * 10000 
+newrrate
+
+pricepercall <- 1000 / (newrrate + 1000)
+pricepercall <- pricepercall + 1
+pricepercall
+
+
+profit <- (10 * TP) - (pricepercall * (TP + FP))
+
+profit
+profitnothing
+
+## 1000 + (successrate - .11) * 10000 / 1000
+```
+
+Under the assumption that we call everyone that our model predicts will say yes, and while looking at this specific testing set, we make a profit of $ 6590.13. If we try using SVM with the rbf kernel we make a profit of roughlt $ 2638.89 dollars. We also tried to combine KNN with K-means clusters, where we only tried to make predictions about people who were in the cluster that had the most yesses. This method had an estimated profit of around 1919.74 dollars. We believe this combined strategy did not perform as well as well as KNN on its own simply because there were not enough people to choose from, even though the correctly predicted yesses went up.
+
+
 
