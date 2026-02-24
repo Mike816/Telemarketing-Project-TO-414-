@@ -30,6 +30,7 @@ my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
 
 summary(my_data)
 ```
+
 # convert binary
 ```{r}
 # Identify binary factors (2 levels: "yes"/"no" or "no"/"unknown")
