@@ -133,7 +133,7 @@ profitnothing
 ## 1000 + (successrate - .11) * 10000 / 1000
 ```
 
-Under the assumption that we call everyone that our model predicts will say yes, and while looking at this specific testing set, we make a profit of $ 6590.13. If we try using SVM with the rbf kernel we make a profit of roughlt $ 2638.89 dollars. We also tried to combine KNN with K-means clusters, where we only tried to make predictions about people who were in the cluster that had the most yesses. This method had an estimated profit of around 1919.74 dollars. We believe this combined strategy did not perform as well as well as KNN on its own simply because there were not enough people to choose from, even though the correctly predicted yesses went up.
+Under the assumption that we call everyone that our model predicts will say yes, and while looking at this specific testing set, we make a profit of $6590.13. If we try using SVM with the rbf kernel we make a profit of roughly $2638.89 dollars. We also tried to combine KNN with K-means clusters, where we only tried to make predictions about people who were in the cluster that had the most yesses. This method had an estimated profit of around $1919.74 dollars. We believe this combined strategy did not perform as well as well as KNN on its own simply because there were not enough people in the best cluster, even though our sensitivity got better. We chose to only look at the top cluster because all other clusters had populations where less than 20% of the people responded with yes, and 20% was our calculated yes rate to break even
 
 
 

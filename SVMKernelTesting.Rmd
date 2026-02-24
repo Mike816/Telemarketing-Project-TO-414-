@@ -43,8 +43,8 @@ library(kernlab)
 #anovadotmodel <- ksvm(y ~ ., data = tele_train, kernel = "anovadot")
 #splinedotmodel <- ksvm(y ~ ., data = tele_train, kernel = "splinedot")
 
-splinedotmodel <- ksvm(y ~ ., data = tele_train, kernel = "rbfdot")
-saveRDS(tanhdotmodel, file = "rbf_model.rds")
+rbfdotmodel <- ksvm(y ~ ., data = tele_train, kernel = "rbfdot")
+saveRDS(rbfdotmodel, file = "rbf_model.rds")
 
 #saveRDS(tanhdotmodel, file = "tanhdot.rds")
 #saveRDS(polydotmodel, file = "polydot.rds")
@@ -93,3 +93,42 @@ confusionMatrix(as.factor(rbf_pred), as.factor(tele_test$y), positive = "yes")
 
 Our group split up running the models on our own machines and saved them to files so that we could run things faster. Our group ran the predictions for all the kernels except stringdot, and found that the sensitivity was highest for RBF. We want a higher sensitivity because we are particularly interested in finding the most successful calls.
 
+Confusion Matrix and Statistics
+
+          Reference
+Prediction    no   yes
+       no  10815  1056
+       yes   166   320
+       
+```{r}
+FN <- 1056
+TN <- 10815
+
+TP <- 320
+FP <- 166 
+
+successrate <- (FN + TP) / (FN + TN + TP + FP)
+successrate
+
+profitnothing <- (10 * (FN + TP)) - (2 * (TN + TP + FN + FP))
+
+newsuccessrate <- TP / (TP + FP)
+newsuccessrate
+
+diff <- newsuccessrate - successrate
+diff
+
+newrrate <- diff * 10000 
+newrrate
+
+pricepercall <- 1000 / (newrrate + 1000)
+pricepercall <- pricepercall + 1
+pricepercall
+
+
+profit <- (10 * TP) - (pricepercall * (TP + FP))
+
+profit
+profitnothing
+
+```

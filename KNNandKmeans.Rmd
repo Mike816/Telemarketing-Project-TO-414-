@@ -3,3 +3,102 @@ title: "KNNandKmeans"
 output: html_document
 ---
 
+```{r}
+
+tele <- read.csv("tele.csv", stringsAsFactors = TRUE)
+
+tele$X <- NULL
+tele$duration <- NULL
+
+tele$telepcalled <-ifelse(tele$pdays == 999, 0,1)
+
+str(tele)
+summary(tele)
+
+# Convert categorical variables to numeric indicators
+# model.matrix creates 'dummy' columns for every factor level
+tele_mm <- as.data.frame(model.matrix(~ . - 1, data = tele))
+```
+
+```{r}
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+# Apply normalization to the dummy-coded data
+tele_norm <- as.data.frame(lapply(tele_mm, normalize))
+
+# Assuming 'yyes' is your target after dummy coding
+target <- tele_mm$yyes 
+
+# Remove the target from the features used for clustering/training
+tele_features <- tele_norm[, !names(tele_norm) %in% c("yyes", "yno")]
+```
+
+```{r}
+
+library(class)
+library(caret)
+
+# --- STEP 1: IDENTIFY THE GOLDEN CLUSTER ---
+# Calculate the success rate for each cluster using the training labels
+# This finds which "tribe" actually says 'yes' most often
+cluster_performance <- tapply(train_labels, train_data$cluster, mean)
+golden_cluster_id <- as.numeric(names(which.max(cluster_performance)))
+
+cat("The Golden Cluster is Cluster #", golden_cluster_id, 
+    " with a training success rate of ", round(max(cluster_performance)*100, 2), "%\n")
+
+# --- STEP 2: FILTER TEST DATA TO ONLY INCLUDE THE GOLDEN CLUSTER ---
+# We only want to 'call' people who fall into this high-probability group
+is_golden_test <- test_data$cluster == golden_cluster_id
+
+# Create a subset of the test data and labels for just this cluster
+test_data_filtered   <- test_data[is_golden_test, ]
+test_labels_filtered <- test_labels[is_golden_test]
+
+# --- STEP 3: RUN KNN ON THE FILTERED DATA ---
+# We still use the full train_data/train_labels so the model has a broad 
+# understanding of patterns, but we only generate predictions for our target cluster.
+predictions_filtered <- knn(train = train_data, 
+                            test  = test_data_filtered, 
+                            cl    = train_labels, 
+                            k     = 18)
+
+# --- STEP 4: EVALUATE & PROFIT CALCULATIONS ---
+# Confusion Matrix for the filtered group
+cm <- confusionMatrix(as.factor(predictions_filtered), 
+                      as.factor(test_labels_filtered), 
+                      positive = "1")
+
+# True Positives and False Positives from our selective calling strategy
+TP <- cm$table[2,2] 
+FP <- cm$table[2,1] 
+
+# Calculate the baseline for the WHOLE test set (to see how much we improved)
+total_yes_baseline <- sum(test_labels == 1)
+total_calls_baseline <- nrow(test_data)
+baseline_success_rate <- total_yes_baseline / total_calls_baseline
+
+# Baseline Profit (Calling everyone in the test set)
+baseline_profit <- (10 * total_yes_baseline) - (2 * total_calls_baseline)
+
+# Model Success Rate (Precision within the Golden Cluster)
+newsuccessrate <- TP / (TP + FP)
+
+# Your specific efficiency-based cost logic
+diff <- newsuccessrate - baseline_success_rate
+newrrate <- diff * 10000 
+
+pricepercall <- (1000 / (newrrate + 1000)) + 1
+
+# FINAL PROFIT
+# Notice (TP + FP) is much smaller now because we ignored 4 out of 5 clusters!
+profit <- (10 * TP) - (pricepercall * (TP + FP))
+
+# Results Output
+cat("New Success Rate (Precision):", round(newsuccessrate * 100, 2), "%\n")
+cat("Efficiency Adjusted Price Per Call: $", round(pricepercall, 2), "\n")
+cat("Total Profit from Cluster-Filtered KNN: $", round(profit, 2), "\n")
+
+```
