@@ -80,6 +80,12 @@ ggplot(profit_df, aes(success_rate, percent_profit)) +
   )
 ```
 
+For our profitability calculations, we assume the following as per the specifications:
+- Each call has a static cost of 1 dollar
+- Employees have a 1000 dollar training cost, with on average 1000 calls before quitting, increasing by 100 calls per 1% additional call success above the current 11% and vice versa.
+- The revenue from a successful call is 10 dollars
+
+
 As shown in the figure above, the percent profitability per call increases approximately linearly with the success rate. Since the break even success rate is 20%, any call with more than a 20% chance of success will generate profit. Therefore, we should make any call if the customer has 20% or more probability to buy our product. 
 
 However, this is not the case with our firm currently. This is where our profitability currently stands:
