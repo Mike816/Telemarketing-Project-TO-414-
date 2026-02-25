@@ -781,6 +781,192 @@ make the call to maximize our profit.</p>
 <p>We will explore both of these approaches and their predicated
 outcomes in the following sections.</p>
 </div>
+<div id="clustering" class="section level2">
+<h2>Clustering</h2>
+<pre class="r"><code># my_data &lt;- read.csv(&quot;tele.csv&quot;)
+
+my_data &lt;- read.csv(&quot;tele.csv&quot;, stringsAsFactors = TRUE)
+# Add new flag of whether the customer was contacted
+#my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
+
+
+#removes = c(&quot;X&quot;, &quot;duration&quot;) # duration is unknown when calling
+#to_be_factors = c(&quot;job&quot;, &quot;marital&quot;, &quot;education&quot;, &quot;default&quot;, &quot;housing&quot;, &quot;loan&quot;, &quot;contact&quot;, &quot;month&quot;, &quot;day_of_week&quot;, &quot;poutcome&quot;, &quot;y&quot;)
+
+my_data$X &lt;- NULL
+my_data$duration &lt;- NULL
+  
+  
+#my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
+
+str(my_data)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    41188 obs. of  20 variables:
+##  $ age           : int  56 57 37 40 56 45 59 41 24 25 ...
+##  $ job           : Factor w/ 12 levels &quot;admin.&quot;,&quot;blue-collar&quot;,..: 4 8 8 1 8 8 1 2 10 8 ...
+##  $ marital       : Factor w/ 4 levels &quot;divorced&quot;,&quot;married&quot;,..: 2 2 2 2 2 2 2 2 3 3 ...
+##  $ education     : Factor w/ 8 levels &quot;basic.4y&quot;,&quot;basic.6y&quot;,..: 1 4 4 2 4 3 6 8 6 4 ...
+##  $ default       : Factor w/ 3 levels &quot;no&quot;,&quot;unknown&quot;,..: 1 2 1 1 1 2 1 2 1 1 ...
+##  $ housing       : Factor w/ 3 levels &quot;no&quot;,&quot;unknown&quot;,..: 1 1 3 1 1 1 1 1 3 3 ...
+##  $ loan          : Factor w/ 3 levels &quot;no&quot;,&quot;unknown&quot;,..: 1 1 1 1 3 1 1 1 1 1 ...
+##  $ contact       : Factor w/ 2 levels &quot;cellular&quot;,&quot;telephone&quot;: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ month         : Factor w/ 10 levels &quot;apr&quot;,&quot;aug&quot;,&quot;dec&quot;,..: 7 7 7 7 7 7 7 7 7 7 ...
+##  $ day_of_week   : Factor w/ 5 levels &quot;fri&quot;,&quot;mon&quot;,&quot;thu&quot;,..: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ campaign      : int  1 1 1 1 1 1 1 1 1 1 ...
+##  $ pdays         : int  999 999 999 999 999 999 999 999 999 999 ...
+##  $ previous      : int  0 0 0 0 0 0 0 0 0 0 ...
+##  $ poutcome      : Factor w/ 3 levels &quot;failure&quot;,&quot;nonexistent&quot;,..: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ emp.var.rate  : num  1.1 1.1 1.1 1.1 1.1 1.1 1.1 1.1 1.1 1.1 ...
+##  $ cons.price.idx: num  94 94 94 94 94 ...
+##  $ cons.conf.idx : num  -36.4 -36.4 -36.4 -36.4 -36.4 -36.4 -36.4 -36.4 -36.4 -36.4 ...
+##  $ euribor3m     : num  4.86 4.86 4.86 4.86 4.86 ...
+##  $ nr.employed   : num  5191 5191 5191 5191 5191 ...
+##  $ y             : Factor w/ 2 levels &quot;no&quot;,&quot;yes&quot;: 1 1 1 1 1 1 1 1 1 1 ...</code></pre>
+<pre class="r"><code>summary(my_data)</code></pre>
+<pre><code>##       age                 job            marital     
+##  Min.   :17.00   admin.     :10422   divorced: 4612  
+##  1st Qu.:32.00   blue-collar: 9254   married :24928  
+##  Median :38.00   technician : 6743   single  :11568  
+##  Mean   :40.02   services   : 3969   unknown :   80  
+##  3rd Qu.:47.00   management : 2924                   
+##  Max.   :98.00   retired    : 1720                   
+##                  (Other)    : 6156                   
+##                education        default         housing           loan      
+##  university.degree  :12168   no     :32588   no     :18622   no     :33950  
+##  high.school        : 9515   unknown: 8597   unknown:  990   unknown:  990  
+##  basic.9y           : 6045   yes    :    3   yes    :21576   yes    : 6248  
+##  professional.course: 5243                                                  
+##  basic.4y           : 4176                                                  
+##  basic.6y           : 2292                                                  
+##  (Other)            : 1749                                                  
+##       contact          month       day_of_week    campaign          pdays      
+##  cellular :26144   may    :13769   fri:7827    Min.   : 1.000   Min.   :  0.0  
+##  telephone:15044   jul    : 7174   mon:8514    1st Qu.: 1.000   1st Qu.:999.0  
+##                    aug    : 6178   thu:8623    Median : 2.000   Median :999.0  
+##                    jun    : 5318   tue:8090    Mean   : 2.568   Mean   :962.5  
+##                    nov    : 4101   wed:8134    3rd Qu.: 3.000   3rd Qu.:999.0  
+##                    apr    : 2632               Max.   :56.000   Max.   :999.0  
+##                    (Other): 2016                                               
+##     previous            poutcome      emp.var.rate      cons.price.idx 
+##  Min.   :0.000   failure    : 4252   Min.   :-3.40000   Min.   :92.20  
+##  1st Qu.:0.000   nonexistent:35563   1st Qu.:-1.80000   1st Qu.:93.08  
+##  Median :0.000   success    : 1373   Median : 1.10000   Median :93.75  
+##  Mean   :0.173                       Mean   : 0.08189   Mean   :93.58  
+##  3rd Qu.:0.000                       3rd Qu.: 1.40000   3rd Qu.:93.99  
+##  Max.   :7.000                       Max.   : 1.40000   Max.   :94.77  
+##                                                                        
+##  cons.conf.idx     euribor3m      nr.employed     y        
+##  Min.   :-50.8   Min.   :0.634   Min.   :4964   no :36548  
+##  1st Qu.:-42.7   1st Qu.:1.344   1st Qu.:5099   yes: 4640  
+##  Median :-41.8   Median :4.857   Median :5191              
+##  Mean   :-40.5   Mean   :3.621   Mean   :5167              
+##  3rd Qu.:-36.4   3rd Qu.:4.961   3rd Qu.:5228              
+##  Max.   :-26.9   Max.   :5.045   Max.   :5228              
+## </code></pre>
+<pre class="r"><code>outcome &lt;- my_data$y
+
+outcome &lt;- ifelse(my_data$y == &quot;yes&quot;, 1, 0)
+
+#turning factors into numerical values
+my_data &lt;- as.data.frame(model.matrix(~.-1, data = my_data))
+
+
+minmax &lt;- function(x){
+  (x - min(x)) / (max(x) - min(x))
+}
+
+
+## KILLS NA VALUES
+int_minmax &lt;- as.data.frame(lapply(my_data, minmax))
+
+set.seed(12345)
+c5 &lt;- kmeans(int_minmax, 5)
+c5$size</code></pre>
+<pre><code>## [1]  8195  9682  4622 11160  7529</code></pre>
+<pre class="r"><code>c5$centers</code></pre>
+<pre><code>##         age  jobadmin. jobblue.collar jobentrepreneur jobhousemaid
+## 1 0.2990487 0.20219646    0.332763880      0.04307505  0.050152532
+## 2 0.2938264 0.17764925    0.286614336      0.03129519  0.022309440
+## 3 0.2689232 0.01254868    0.005625270      0.00627434  0.003461705
+## 4 0.2909454 0.19614695    0.332078853      0.04525090  0.032258065
+## 5 0.2552993 0.63726923    0.002656395      0.03533006  0.007570727
+##   jobmanagement  jobretired jobself.employed jobservices  jobstudent
+## 1   0.056375839 0.043807200      0.037339841 0.146796827 0.006467358
+## 2   0.053811196 0.089031192      0.024994836 0.126213592 0.062590374
+## 3   0.005408914 0.009736045      0.008437906 0.009952402 0.001514496
+## 4   0.074731183 0.031093190      0.037724014 0.128405018 0.009408602
+## 5   0.143710984 0.014211715      0.054854562 0.008633285 0.013813255
+##   jobtechnician jobunemployed   jobunknown maritalmarried maritalsingle
+## 1    0.04222087   0.027699817 0.0111043319      0.6993289     0.1856010
+## 2    0.08799835   0.030778765 0.0067134889      0.6005990     0.2897129
+## 3    0.92730420   0.009086975 0.0006490697      0.5597144     0.3171787
+## 4    0.07284946   0.026702509 0.0133512545      0.6950717     0.1879032
+## 5    0.05923761   0.019790145 0.0029220348      0.4035064     0.4886439
+##   maritalunknown educationbasic.6y educationbasic.9y educationhigh.school
+## 1    0.001342282      0.0807809640       0.220866382           0.32837096
+## 2    0.002272258      0.0698202851       0.196963437           0.34393720
+## 3    0.001081783      0.0034617049       0.010601471           0.08243185
+## 4    0.002060932      0.0835125448       0.202688172           0.26729391
+## 5    0.002523576      0.0007969186       0.002257936           0.01726657
+##   educationilliterate educationprofessional.course educationuniversity.degree
+## 1        0.0012202563                  0.038316046                  0.1117755
+## 2        0.0006197067                  0.091716587                  0.1084487
+## 3        0.0000000000                  0.743184768                  0.1499351
+## 4        0.0001792115                  0.051702509                  0.1962366
+## 5        0.0000000000                  0.003851773                  0.9721078
+##   educationunknown defaultunknown   defaultyes housingunknown housingyes
+## 1      0.059426480     0.29103112 0.0001220256     0.01989018  0.5334960
+## 2      0.059904978     0.12889899 0.0000000000     0.02323900  0.5590787
+## 3      0.009086975     0.15036781 0.0004327131     0.02185201  0.5538728
+## 4      0.054121864     0.32759857 0.0000000000     0.03109319  0.4465950
+## 5      0.002390756     0.08141852 0.0000000000     0.02045424  0.5640855
+##   loanunknown   loanyes contacttelephone    monthaug     monthdec   monthjul
+## 1  0.01989018 0.1552166       0.09212935 0.167419158 0.0001220256 0.66979866
+## 2  0.02323900 0.1518281       0.08727536 0.057013014 0.0135302623 0.03026234
+## 3  0.02185201 0.1503678       0.26135872 0.408697534 0.0017308524 0.13825184
+## 4  0.03109319 0.1426523       1.00000000 0.004121864 0.0004480287 0.00000000
+## 5  0.02045424 0.1619073       0.14291407 0.308009032 0.0049143313 0.10001328
+##     monthjun   monthmar  monthmay   monthnov    monthoct   monthsep
+## 1 0.00000000 0.00000000 0.0000000 0.16266016 0.000000000 0.00000000
+## 2 0.05308820 0.02995249 0.5118777 0.03842181 0.048130552 0.04059079
+## 3 0.07637386 0.01038511 0.1733016 0.13825184 0.008437906 0.00627434
+## 4 0.34847670 0.00000000 0.6312724 0.01200717 0.003584229 0.00000000
+## 5 0.07464471 0.02762651 0.1284367 0.21556648 0.022977819 0.01965733
+##   day_of_weekmon day_of_weekthu day_of_weektue day_of_weekwed   campaign
+## 1      0.2150092      0.2240390      0.2122026      0.2036608 0.03496811
+## 2      0.2149349      0.2146251      0.1815741      0.1850857 0.01992826
+## 3      0.1880138      0.2239290      0.2044569      0.2035915 0.02912946
+## 4      0.1959677      0.1788530      0.1988351      0.2056452 0.03293255
+## 5      0.2145039      0.2228716      0.1897994      0.1908620 0.02553520
+##       pdays     previous poutcomenonexistent poutcomesuccess emp.var.rate
+## 1 0.9998787 0.0038002266           0.9733984    1.220256e-04    0.9491280
+## 2 0.8788722 0.0765042642           0.5831440    1.097914e-01    0.2934376
+## 3 0.9957006 0.0078197441           0.9498053    4.110775e-03    0.8433533
+## 4 0.9999109 0.0002432156           0.9982975    8.960573e-05    0.9542115
+## 5 0.9586586 0.0274936911           0.8512419    3.838491e-02    0.6257582
+##   cons.price.idx cons.conf.idx euribor3m nr.employed       yyes
+## 1      0.5926389     0.3898928 0.9500096   0.9801125 0.05442343
+## 2      0.3215884     0.3257903 0.1271504   0.4198902 0.23239000
+## 3      0.5222436     0.4821483 0.8246900   0.8812391 0.06533968
+## 4      0.7567603     0.5194388 0.9597333   0.9086053 0.03790323
+## 5      0.4297775     0.4477482 0.5784676   0.7130516 0.16190729</code></pre>
+<pre class="r"><code>## CALCULATING AVERAGE CHURN RATES FOR EACH CLUSTER
+
+my_data$cluster_assignments &lt;- c5$cluster
+
+tapply(outcome, my_data$cluster_assignments, mean)</code></pre>
+<pre><code>##          1          2          3          4          5 
+## 0.05442343 0.23239000 0.06533968 0.03790323 0.16190729</code></pre>
+<pre class="r"><code># Calculate the mean yes rate per cluster
+yes_averages &lt;- aggregate(outcome ~ my_data$cluster_assignments, FUN = mean)
+colnames(yes_averages) &lt;- c(&quot;Cluster&quot;, &quot;Yes Rate&quot;)
+yes_averages</code></pre>
+<pre><code>##   Cluster   Yes Rate
+## 1       1 0.05442343
+## 2       2 0.23239000
+## 3       3 0.06533968
+## 4       4 0.03790323
+## 5       5 0.16190729</code></pre>
+</div>
 </div>
 <div id="results" class="section level1">
 <h1>Results</h1>
@@ -1463,16 +1649,9 @@ train_rows &lt;- sample(1:nrow(tele), ratio*nrow(tele))
 tele_train &lt;- tele[train_rows,]
 tele_test &lt;- tele[-train_rows,]
 
-library(kernlab)</code></pre>
-<pre><code>## 
-## Attaching package: &#39;kernlab&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:scales&#39;:
-## 
-##     alpha</code></pre>
-<pre><code>## The following object is masked from &#39;package:ggplot2&#39;:
-## 
-##     alpha</code></pre>
-<pre class="r"><code># radial basis rbfdot
+library(kernlab)
+
+# radial basis rbfdot
 #tanhdotmodel &lt;- ksvm(y ~ ., data = tele_train, kernel = &quot;tanhdot&quot;)
 #polydotmodel &lt;- ksvm(y ~ ., data = tele_train, kernel = &quot;polydot&quot;)
 #vanilladotmodel &lt;- ksvm(y ~ ., data = tele_train, kernel = &quot;vanilladot&quot;)
@@ -1792,6 +1971,127 @@ most profitable, only behind KNN. We hypothesize that logistic
 regression may be more precise, giving us fewer but highly responsive
 customers. This leads to high cost per call in additional to higher
 margin compared to KNN.</p>
+<pre class="r"><code>my_data = read.csv(&quot;tele.csv&quot;)
+
+# Add new flag of whether the customer was contacted
+my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
+
+removes = c(&quot;X&quot;, &quot;duration&quot;, &quot;pdays&quot;) # duration is unknown when calling
+to_be_factors = c(&quot;job&quot;, &quot;marital&quot;, &quot;education&quot;, &quot;default&quot;, &quot;housing&quot;, &quot;loan&quot;, &quot;contact&quot;, &quot;month&quot;, &quot;day_of_week&quot;, &quot;poutcome&quot;, &quot;y&quot;)
+
+my_data[removes] = NULL
+my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
+
+
+summary(my_data)</code></pre>
+<pre><code>##       age                 job            marital     
+##  Min.   :17.00   admin.     :10422   divorced: 4612  
+##  1st Qu.:32.00   blue-collar: 9254   married :24928  
+##  Median :38.00   technician : 6743   single  :11568  
+##  Mean   :40.02   services   : 3969   unknown :   80  
+##  3rd Qu.:47.00   management : 2924                   
+##  Max.   :98.00   retired    : 1720                   
+##                  (Other)    : 6156                   
+##                education        default         housing           loan      
+##  university.degree  :12168   no     :32588   no     :18622   no     :33950  
+##  high.school        : 9515   unknown: 8597   unknown:  990   unknown:  990  
+##  basic.9y           : 6045   yes    :    3   yes    :21576   yes    : 6248  
+##  professional.course: 5243                                                  
+##  basic.4y           : 4176                                                  
+##  basic.6y           : 2292                                                  
+##  (Other)            : 1749                                                  
+##       contact          month       day_of_week    campaign         previous    
+##  cellular :26144   may    :13769   fri:7827    Min.   : 1.000   Min.   :0.000  
+##  telephone:15044   jul    : 7174   mon:8514    1st Qu.: 1.000   1st Qu.:0.000  
+##                    aug    : 6178   thu:8623    Median : 2.000   Median :0.000  
+##                    jun    : 5318   tue:8090    Mean   : 2.568   Mean   :0.173  
+##                    nov    : 4101   wed:8134    3rd Qu.: 3.000   3rd Qu.:0.000  
+##                    apr    : 2632               Max.   :56.000   Max.   :7.000  
+##                    (Other): 2016                                               
+##         poutcome      emp.var.rate      cons.price.idx  cons.conf.idx  
+##  failure    : 4252   Min.   :-3.40000   Min.   :92.20   Min.   :-50.8  
+##  nonexistent:35563   1st Qu.:-1.80000   1st Qu.:93.08   1st Qu.:-42.7  
+##  success    : 1373   Median : 1.10000   Median :93.75   Median :-41.8  
+##                      Mean   : 0.08189   Mean   :93.58   Mean   :-40.5  
+##                      3rd Qu.: 1.40000   3rd Qu.:93.99   3rd Qu.:-36.4  
+##                      Max.   : 1.40000   Max.   :94.77   Max.   :-26.9  
+##                                                                        
+##    euribor3m      nr.employed     y         was_contacted    
+##  Min.   :0.634   Min.   :4964   no :36548   Min.   :0.00000  
+##  1st Qu.:1.344   1st Qu.:5099   yes: 4640   1st Qu.:0.00000  
+##  Median :4.857   Median :5191               Median :0.00000  
+##  Mean   :3.621   Mean   :5167               Mean   :0.03678  
+##  3rd Qu.:4.961   3rd Qu.:5228               3rd Qu.:0.00000  
+##  Max.   :5.045   Max.   :5228               Max.   :1.00000  
+## </code></pre>
+<pre class="r"><code>ratio = 0.7
+set.seed(12345)
+train_rows = sample(1:nrow(my_data), ratio*nrow(my_data))
+training = my_data[train_rows, ]
+testing = my_data[-train_rows, ]</code></pre>
+<pre class="r"><code>linear_model = glm(y ~ ., data = training, family = binomial)
+stepmodel = step(linear_model, direction = &quot;backward&quot;, trace = 0)
+
+### Logistic model creation
+
+#full_stepmodel = step(linear_model, direction = &quot;backward&quot;)
+#saveRDS(full_stepmodel, file = &quot;full_stepmodel_without_pdays.rds&quot;)
+#loaded_full_stepmodel &lt;- readRDS(&quot;full_stepmodel_without_pdays.rds&quot;)
+
+library(caret)
+pred_class &lt;- predict(stepmodel, testing, type = &quot;response&quot;)
+pred_factor &lt;- ifelse(pred_class &gt; 0.2, &quot;yes&quot;, &quot;no&quot;)
+pred_factor &lt;- factor(pred_factor, levels = levels(training$y))
+
+confusionMatrix(pred_factor, testing$y, positive = &quot;yes&quot;)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction   no  yes
+##        no  9915  626
+##        yes 1066  750
+##                                           
+##                Accuracy : 0.8631          
+##                  95% CI : (0.8569, 0.8691)
+##     No Information Rate : 0.8886          
+##     P-Value [Acc &gt; NIR] : 1               
+##                                           
+##                   Kappa : 0.393           
+##                                           
+##  Mcnemar&#39;s Test P-Value : &lt;2e-16          
+##                                           
+##             Sensitivity : 0.54506         
+##             Specificity : 0.90292         
+##          Pos Pred Value : 0.41300         
+##          Neg Pred Value : 0.94061         
+##              Prevalence : 0.11135         
+##          Detection Rate : 0.06069         
+##    Detection Prevalence : 0.14696         
+##       Balanced Accuracy : 0.72399         
+##                                           
+##        &#39;Positive&#39; Class : yes             
+## </code></pre>
+<pre class="r"><code>baseline &lt;- 0.11
+success_rate_glm &lt;- 762/(1039+762)
+retention_glm &lt;- 1000+((success_rate_glm - baseline)*10000)
+whole_training_cost &lt;- 1000
+
+training_cost_per_call &lt;- whole_training_cost/retention_glm
+
+print(training_cost_per_call)</code></pre>
+<pre><code>## [1] 0.2420731</code></pre>
+<pre class="r"><code>revenue &lt;- 10*762</code></pre>
+<pre class="r"><code>cat(&quot;Total revenue is:&quot;, &quot;$&quot;, revenue)</code></pre>
+<pre><code>## Total revenue is: $ 7620</code></pre>
+<pre class="r"><code>total_cost &lt;- 1801*(1+training_cost_per_call)
+
+
+cat(&quot;Total Cost is :&quot;, &quot;$&quot;, total_cost)</code></pre>
+<pre><code>## Total Cost is : $ 2236.974</code></pre>
+<pre class="r"><code>profit &lt;- 10*762 - 1801*(1+training_cost_per_call)
+
+cat(&quot;Total Profit is:&quot;, &quot;$&quot;, profit)</code></pre>
+<pre><code>## Total Profit is: $ 5383.026</code></pre>
 <p>Our fine-tuned logistic regression at a threshold of 0.18 sees: -
 success rate = 40.3% - cost per call = 1.25 - profit = 5439.79</p>
 </div>
