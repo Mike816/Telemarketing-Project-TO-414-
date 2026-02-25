@@ -1,5 +1,148 @@
 ---
 title: "FinalReport"
-output: html_document
+output: 
+  html_document:
+    self-contained: true
 ---
 
+## Team Members
+
+| ![Riccardo Ferrari](https://media.licdn.com/dms/image/v2/D5603AQFflEafFyd_7A/profile-displayphoto-crop_800_800/B56ZyG5l2gIAAI-/0/1771789778338?e=1773273600&v=beta&t=FdsOTImp8CNb_dXLdDQCNNXy_j8SyvSK0DxZqOiT7jI "Riccardo Ferrari") | ![Mike Ye](https://media.licdn.com/dms/image/v2/D5603AQG9mSSoNSuGYA/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1718691249838?e=1773878400&v=beta&t=2luSsNSs3Qjs0-bktoZLajVcQeoDmHPqxcX2cdPo9Z4 "Mike Ye") | ![Daniel Myung](https://drive.google.com/uc?export=view&id=1oX3kGp_eOsgvzug_oAhZMJBVH7htjpfW) | ![Steven Liu](https://media.licdn.com/dms/image/v2/D5603AQENrf52ejSqrw/profile-displayphoto-shrink_800_800/B56ZNpR_MXGsAk-/0/1732638143673?e=1773273600&v=beta&t=bZ6kbfHZRhqgfTI_Boqudv1-jZAX4SIyoGw_Qg6cgnc "Steven Liu") | ![Andrea Demelas](https://drive.google.com/uc?export=view&id=1sfs8yje5_bIvdE-VDuWeBrWkE1UmgzFm) |
+|---|---|---|---|---|
+| **[Riccardo Ferrari](https://www.linkedin.com/in/riccardo-ferrari-2929b722a/)**<br>Financial Analyst | **[Mike Ye](https://www.linkedin.com/in/mike-ye-460923270/)**<br>Team Lead | **[Daniel Myung]()**<br>Data Scientist | **[Steven Liu](https://www.linkedin.com/in/steven-liu-554652244/)**<br>Communication Specialist | **[Andrea Demelas](https://www.linkedin.com/in/andreademelas/)**<br>Business Analyst |
+
+# Executive Summary
+414 Company's call center currently faces several challenges. Call center associates frequently face abusive customers, which leads to extreme employee turnover. Many quit within days, driving high training costs of $1000 per associate. The call center utilizes a blanket strategy in regards to outreach, with standardized talking-points from HR. 
+
+We use data-forward methodologies to assess customer patterns, recommending a targeted approach to achieve beyond break-even profitability. Our approach utilizes supervised and unsupervised algorithmic learning models to calculate profitable target segments, comparing the results to blanket-calling (10% success). We demonstrate our work with each type of algorithm to propose the most profitable strategy.  
+
+# Background
+Telemarketing has evolved from reactive operations to data-driven hubs using analytics for efficiency and customer satisfaction. The industry has applied predictive learning techniques from computer science research to identify and recommend calls to high customer propensity profiles ([Alternyx](recommend calls to "nearest" high-propensity profiles, reducing random dialing)). In the modern age, telemarketing has shifted away from mixed-results intuition into focused, customer-focused campaigns. 
+
+# Data Exploration
+
+- mike data exploration
+	- some metrics 
+- clustering 
+	- showcase clustering graphs
+
+
+We began by taking a deep dive into our data. First, we observe that some metrics regarding our calls:
+
+- 11% success rate
+- -42.9% loss per call made. 
+
+From a purely monetary perspective, with a success rate this low, the optimal course of action is to not make any calls at all until we can increase our success rate per call to at least 20%.
+
+```
+code for that line graph with red line
+```
+
+Next, we deploy clustering, an unsupervised machine learning technique, to create nuanced customer segments within the 414 Company's telemarketing dataset to achieve profitability. Our focus is on calling those segments with a >20% succuss rate. We can also make a prediction model to determine if a call meets the criteria before we make the call to maximize our profit. 
+
+
+We will explore both of these approaches and their predicated outcomes in the following sections.
+
+
+
+# Results 
+
+## Data Cleaning
+We proceed to build supervised learning models with respect to predicting "y", or the propensity of customer profiles. 
+
+We first found the data to require additional cleaning. For instance, we removed column “X” since it had no predictive meaning. We also removed "duration" and "pdays" to ensure a robust predictive approach, without the model being influenced by information it will not know. 
+
+Additionally, we also factorized all other variables, such as "job", "marital", "education", into categorical variables to facilitate fair comparisons. We prepared the data-set for model training by reserving a portion of the data for training and another for verification. We verify consistency between the training and testing data by comparing their means.
+
+
+## Modeling
+Our approach first centered on prioritizing sensitivity, an attribute of models that minimizes false positives, which decreases the amount of non-responsive customers contacted by 414 Company. Amongst the different approaches, we discovered that KNN gave us the highest profit, though not having the highest sensitivity. 
+
+To benchmark a model's financial performance relies firstly on calculating the success rate, that is:
+```
+
+Success Rate = True Positive / (True Positive + False Positive)
+```
+
+Then, using the success rate to quantify cost per call:
+```
+Training cost = 1000 / (1000 + (success_rate - baseline_success_rate) * 10000)
+cost_per_call = Training Cost + 1
+```
+
+And finally calculating the profit: 
+
+```
+Profit = ($10 * True Positive) - (cost_per_call * (True Positive + False Positive))
+```
+We will use this framework with all models going forward. 
+### Best: K Nearest Neighbor (KNN) (without clustering)
+knn in danielsbranch
+
+
+K Nearest Neighbor (KNN) is an algorithm that classifies new customers by finding the K most similar historical customers and predicting based on their majority outcome (buy/no-buy). In short, it creates a "customer similarity map" of where our best customers are located. 
+
+We discovered that KNN gave us the highest profit, though not having the highest sensitivity. We hypothesize that other models, while having higher sensitivities, did not produce a sufficient amount of true positives, leading to lower profit.  
+
+```
+code
+```
+
+Assuming that everyone in our model is responsive, we see: 
+
+- success rate = 97.6%
+- cost per call = $1.10
+- profit = $6590.13
+
+### KNN with clusters
+knnandkmeans in danielsbranch
+
+- 13 at $ 1315.76
+- 10 at 1359.13
+- 9 at 1490.16
+- 7 at 919$ profit
+- 5 at 1985.85 profit
+- 4 at $ 2232.14
+- 3 at 2216.48 profit
+- 2 at 2193.67
+- therefore profit is inversely correlated with number of clusters
+
+We also trained KNN using clustering as well. In this approach, we only made predictions about customers who were in the highest propensity cluster. However, this strategy did not perform as well as KNN on its own. 
+```
+code
+```
+Using this method, we identify that four clusters at our constant of 18 neighbors was the most profitable: 
+- success rate = 60.2%
+- Cost per call = $1.17
+- profit = $2232.14 dollars.
+
+Profit appears inversely correlated with the number of clusters as well. As more clusters appear, profits decrease, with an unusual increase and subsequent plateau after eight clusters. We hypothesize that larger clusters may contain a mix of high-propensity and low-propensity customers, and after a certain number of clusters, the algorithm identifies a mostly profitable segment. 
+### SVM with RBF
+svm kernel testing in danielsbranch
+
+
+Support Vector Machine (SVM) is a supervised algorithm that constructs a maximum-margin plane that separates categories, drawn using linear (vanilla), polynomial (poly), or 3D lines (RBF). In short, SVM finds the best dividing line between customers who buy term deposits and those who don't, making future predictions are more accurate. 
+
+We discovered that SVM using RBF gave us the highest sensitivity amongst the SVM variants. We hypothesize that other variants such as linear (vanilla) were not able to capture the nuances of the data or were not suitable for the specific dataset. 
+
+```
+code
+```
+Using SVM with RBF, we see:
+
+- success rate = 65.8%
+- Cost per call = $1.15
+- profit = $2638.89 dollars.
+
+### Logistic Regression
+part a in stevenliu branch
+
+Logistic regression models the probability of binary outcomes using the logistic (sigmoid) function, incorporating customer characteristics such as age, job type, and loan status to identify how likely each customer will be responsive.  
+
+We discovered that logistic regression gave us a comparable sensitivity to KNN. Additionally, logistic regression gave us the second most profitable, only behind KNN. We hypothesize that logistic regression may be more precise, giving us fewer but highly responsive customers. This leads to high cost per call in additional to higher margin compared to KNN. 
+
+
+Our fine-tuned logistic regression at a threshold of 0.18 sees: 
+- success rate = 40.3% 
+- cost per call = 1.25
+- profit = 5439.79 
