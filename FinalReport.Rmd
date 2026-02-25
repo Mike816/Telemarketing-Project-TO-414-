@@ -444,7 +444,6 @@ profit
 profitnothing
 
 ## 1000 + (successrate - .11) * 10000 / 1000
-=======
 ```
 code
 >>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
