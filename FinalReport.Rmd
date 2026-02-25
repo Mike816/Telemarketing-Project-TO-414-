@@ -21,7 +21,6 @@ Telemarketing has evolved from reactive operations to data-driven hubs using ana
 
 # Data Exploration
 
-<<<<<<< HEAD
 - mike data exploration
 	- some metrics 
 - clustering 
@@ -38,7 +37,6 @@ From a purely monetary perspective, with a success rate this low, the optimal co
 ```
 code for that line graph with red line
 ```
-=======
 ### Reading Data and Data Cleaning
 
 ```{r}
@@ -270,18 +268,73 @@ for (v in good_num_vars) {
 ```
 
 Another interesting find was the correlation between interests rates and our call success rate. It seems lower interests rates (<3%) dramatically increase our call success rate while high interest rates (>3.57) lowers them to the point of unsuitability. This would suggest that we should increase our call output during times with lower interest rates, and vice versa.
->>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
 
 Next, we deploy clustering, an unsupervised machine learning technique, to create nuanced customer segments within the 414 Company's telemarketing dataset to achieve profitability. Our focus is on calling those segments with a >20% succuss rate. We can also make a prediction model to determine if a call meets the criteria before we make the call to maximize our profit. 
 
 
 We will explore both of these approaches and their predicated outcomes in the following sections.
 
+## Clustering
 
+```{r}
+# my_data <- read.csv("tele.csv")
+
+my_data <- read.csv("tele.csv", stringsAsFactors = TRUE)
+# Add new flag of whether the customer was contacted
+#my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
+
+
+#removes = c("X", "duration") # duration is unknown when calling
+#to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
+
+my_data$X <- NULL
+my_data$duration <- NULL
+  
+  
+#my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
+
+str(my_data)
+summary(my_data)
+```
+
+```{r}
+outcome <- my_data$y
+
+outcome <- ifelse(my_data$y == "yes", 1, 0)
+
+#turning factors into numerical values
+my_data <- as.data.frame(model.matrix(~.-1, data = my_data))
+
+
+minmax <- function(x){
+  (x - min(x)) / (max(x) - min(x))
+}
+
+
+## KILLS NA VALUES
+int_minmax <- as.data.frame(lapply(my_data, minmax))
+
+set.seed(12345)
+c5 <- kmeans(int_minmax, 5)
+c5$size
+c5$centers
+
+
+## CALCULATING AVERAGE CHURN RATES FOR EACH CLUSTER
+
+my_data$cluster_assignments <- c5$cluster
+
+tapply(outcome, my_data$cluster_assignments, mean)
+
+# Calculate the mean yes rate per cluster
+yes_averages <- aggregate(outcome ~ my_data$cluster_assignments, FUN = mean)
+colnames(yes_averages) <- c("Cluster", "Yes Rate")
+yes_averages
+
+```
 
 # Results 
 
-<<<<<<< HEAD
 ## Data Cleaning
 We proceed to build supervised learning models with respect to predicting "y", or the propensity of customer profiles. 
 
@@ -290,8 +343,6 @@ We first found the data to require additional cleaning. For instance, we removed
 Additionally, we also factorized all other variables, such as "job", "marital", "education", into categorical variables to facilitate fair comparisons. We prepared the data-set for model training by reserving a portion of the data for training and another for verification. We verify consistency between the training and testing data by comparing their means.
 
 
-=======
->>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
 ## Modeling
 Our approach first centered on prioritizing sensitivity, an attribute of models that minimizes false positives, which decreases the amount of non-responsive customers contacted by 414 Company. Amongst the different approaches, we discovered that KNN gave us the highest profit, though not having the highest sensitivity. 
 
@@ -321,7 +372,6 @@ K Nearest Neighbor (KNN) is an algorithm that classifies new customers by findin
 
 We discovered that KNN gave us the highest profit, though not having the highest sensitivity. We hypothesize that other models, while having higher sensitivities, did not produce a sufficient amount of true positives, leading to lower profit.  
 
-<<<<<<< HEAD
 Code
 ```{r}
 tele <- read.csv("tele.csv", stringsAsFactors = TRUE)
@@ -445,9 +495,7 @@ profitnothing
 
 ## 1000 + (successrate - .11) * 10000 / 1000
 ```
-code
->>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
-```
+
 
 Assuming that everyone in our model is responsive, we see: 
 
@@ -469,7 +517,6 @@ knnandkmeans in danielsbranch
 - therefore profit is inversely correlated with number of clusters
 
 We also trained KNN using clustering as well. In this approach, we only made predictions about customers who were in the highest propensity cluster. However, this strategy did not perform as well as KNN on its own. 
-<<<<<<< HEAD
 
 Code
 ```{r}
@@ -578,11 +625,8 @@ cat("Total Profit from Cluster-Filtered KNN: $", round(profit, 2), "\n")
 
 ```
 
-=======
-```
 code
-```
->>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
+
 Using this method, we identify that four clusters at our constant of 18 neighbors was the most profitable: 
 - success rate = 60.2%
 - Cost per call = $1.17
@@ -597,7 +641,6 @@ Support Vector Machine (SVM) is a supervised algorithm that constructs a maximum
 
 We discovered that SVM using RBF gave us the highest sensitivity amongst the SVM variants. We hypothesize that other variants such as linear (vanilla) were not able to capture the nuances of the data or were not suitable for the specific dataset. 
 
-<<<<<<< HEAD
 
 code
 ```{r}
@@ -634,10 +677,9 @@ library(kernlab)
 #besseldotmodel <- ksvm(y ~ ., data = tele_train, kernel = "besseldot")
 #anovadotmodel <- ksvm(y ~ ., data = tele_train, kernel = "anovadot")
 #splinedotmodel <- ksvm(y ~ ., data = tele_train, kernel = "splinedot")
+#rbfdotmodel <- ksvm(y ~ ., data = tele_train, kernel = "rbfdot")
 
-rbfdotmodel <- ksvm(y ~ ., data = tele_train, kernel = "rbfdot")
-saveRDS(rbfdotmodel, file = "rbf_model.rds")
-
+#saveRDS(rbfdotmodel, file = "rbf_model.rds")
 #saveRDS(tanhdotmodel, file = "tanhdot.rds")
 #saveRDS(polydotmodel, file = "polydot.rds")
 #saveRDS(vanilladotmodel, file = "vanilla.rds")
@@ -716,11 +758,7 @@ profitnothing
 
 ```
 
-=======
-```
-code
-```
->>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
+
 Using SVM with RBF, we see:
 
 - success rate = 65.8%
@@ -734,12 +772,82 @@ Logistic regression models the probability of binary outcomes using the logistic
 
 We discovered that logistic regression gave us a comparable sensitivity to KNN. Additionally, logistic regression gave us the second most profitable, only behind KNN. We hypothesize that logistic regression may be more precise, giving us fewer but highly responsive customers. This leads to high cost per call in additional to higher margin compared to KNN. 
 
+```{r}
+my_data = read.csv("tele.csv")
 
-Our fine-tuned logistic regression at a threshold of 0.18 sees: 
-- success rate = 40.3% 
-- cost per call = 1.25
-<<<<<<< HEAD
-- profit = 5439.79 
-=======
-- profit = 5439.79 
->>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
+# Add new flag of whether the customer was contacted
+my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
+
+removes = c("X", "duration", "pdays") # duration is unknown when calling
+to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
+
+my_data[removes] = NULL
+my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
+
+
+summary(my_data)
+```
+
+```{r}
+ratio = 0.7
+set.seed(12345)
+train_rows = sample(1:nrow(my_data), ratio*nrow(my_data))
+training = my_data[train_rows, ]
+testing = my_data[-train_rows, ]
+```
+
+```{r, cache= TRUE}
+linear_model = glm(y ~ ., data = training, family = binomial)
+stepmodel = step(linear_model, direction = "backward", trace = 0)
+
+### Logistic model creation
+
+#full_stepmodel = step(linear_model, direction = "backward")
+#saveRDS(full_stepmodel, file = "full_stepmodel_without_pdays.rds")
+#loaded_full_stepmodel <- readRDS("full_stepmodel_without_pdays.rds")
+
+library(caret)
+pred_class <- predict(stepmodel, testing, type = "response")
+pred_factor <- ifelse(pred_class > 0.2, "yes", "no")
+pred_factor <- factor(pred_factor, levels = levels(training$y))
+
+confusionMatrix(pred_factor, testing$y, positive = "yes")
+
+baseline <- 0.11
+success_rate_glm <- 762/(1039+762)
+retention_glm <- 1000+((success_rate_glm - baseline)*10000)
+whole_training_cost <- 1000
+
+training_cost_per_call <- whole_training_cost/retention_glm
+
+print(training_cost_per_call)
+revenue <- 10*762
+```
+
+```{r}
+cat("Total revenue is:", "$", revenue)
+
+total_cost <- 1801*(1+training_cost_per_call)
+
+
+cat("Total Cost is :", "$", total_cost)
+
+profit <- 10*762 - 1801*(1+training_cost_per_call)
+
+cat("Total Profit is:", "$", profit)
+
+```
+
+The data set was first split into training and testing subsets using a 70/30 split with a fixed seed to ensure reproducibility. A logistic regression model predicting the call success rate was trained on the training data, and backward stepwise selection was applied to retain only statistically useful predictors. 
+
+The model performance was evaluated with a confusion matrix. Using the given data, including the training cost per call, static cost per call, and the true results of the testing data, we were able to calculate the projected profits at each threshold for the model. Iterating through this process led us to an optimal classification threshold of 0.18, with the following results:
+- call success rate = 40.3% 
+- total cost per call = 1.25
+- profit = 5439.79
+
+This is a significant improvement over the baseline profit by nearly 40,000 as well as a 39% improvement in call success rate. With this strategy, we make significantly less calls, but have a much higher success rate and profit margin. Although this approach is not as profitable compared to our clustering model, it still remains a useful model.
+
+
+
+
+
