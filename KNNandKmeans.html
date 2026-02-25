@@ -353,7 +353,190 @@ display: none;
 </div>
 
 
+<pre class="r"><code>tele &lt;- read.csv(&quot;tele.csv&quot;, stringsAsFactors = TRUE)
 
+tele$X &lt;- NULL
+tele$duration &lt;- NULL
+
+tele$telepcalled &lt;-ifelse(tele$pdays == 999, 0,1)
+
+str(tele)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    41188 obs. of  21 variables:
+##  $ age           : int  56 57 37 40 56 45 59 41 24 25 ...
+##  $ job           : Factor w/ 12 levels &quot;admin.&quot;,&quot;blue-collar&quot;,..: 4 8 8 1 8 8 1 2 10 8 ...
+##  $ marital       : Factor w/ 4 levels &quot;divorced&quot;,&quot;married&quot;,..: 2 2 2 2 2 2 2 2 3 3 ...
+##  $ education     : Factor w/ 8 levels &quot;basic.4y&quot;,&quot;basic.6y&quot;,..: 1 4 4 2 4 3 6 8 6 4 ...
+##  $ default       : Factor w/ 3 levels &quot;no&quot;,&quot;unknown&quot;,..: 1 2 1 1 1 2 1 2 1 1 ...
+##  $ housing       : Factor w/ 3 levels &quot;no&quot;,&quot;unknown&quot;,..: 1 1 3 1 1 1 1 1 3 3 ...
+##  $ loan          : Factor w/ 3 levels &quot;no&quot;,&quot;unknown&quot;,..: 1 1 1 1 3 1 1 1 1 1 ...
+##  $ contact       : Factor w/ 2 levels &quot;cellular&quot;,&quot;telephone&quot;: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ month         : Factor w/ 10 levels &quot;apr&quot;,&quot;aug&quot;,&quot;dec&quot;,..: 7 7 7 7 7 7 7 7 7 7 ...
+##  $ day_of_week   : Factor w/ 5 levels &quot;fri&quot;,&quot;mon&quot;,&quot;thu&quot;,..: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ campaign      : int  1 1 1 1 1 1 1 1 1 1 ...
+##  $ pdays         : int  999 999 999 999 999 999 999 999 999 999 ...
+##  $ previous      : int  0 0 0 0 0 0 0 0 0 0 ...
+##  $ poutcome      : Factor w/ 3 levels &quot;failure&quot;,&quot;nonexistent&quot;,..: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ emp.var.rate  : num  1.1 1.1 1.1 1.1 1.1 1.1 1.1 1.1 1.1 1.1 ...
+##  $ cons.price.idx: num  94 94 94 94 94 ...
+##  $ cons.conf.idx : num  -36.4 -36.4 -36.4 -36.4 -36.4 -36.4 -36.4 -36.4 -36.4 -36.4 ...
+##  $ euribor3m     : num  4.86 4.86 4.86 4.86 4.86 ...
+##  $ nr.employed   : num  5191 5191 5191 5191 5191 ...
+##  $ y             : Factor w/ 2 levels &quot;no&quot;,&quot;yes&quot;: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ telepcalled   : num  0 0 0 0 0 0 0 0 0 0 ...</code></pre>
+<pre class="r"><code>summary(tele)</code></pre>
+<pre><code>##       age                 job            marital     
+##  Min.   :17.00   admin.     :10422   divorced: 4612  
+##  1st Qu.:32.00   blue-collar: 9254   married :24928  
+##  Median :38.00   technician : 6743   single  :11568  
+##  Mean   :40.02   services   : 3969   unknown :   80  
+##  3rd Qu.:47.00   management : 2924                   
+##  Max.   :98.00   retired    : 1720                   
+##                  (Other)    : 6156                   
+##                education        default         housing           loan      
+##  university.degree  :12168   no     :32588   no     :18622   no     :33950  
+##  high.school        : 9515   unknown: 8597   unknown:  990   unknown:  990  
+##  basic.9y           : 6045   yes    :    3   yes    :21576   yes    : 6248  
+##  professional.course: 5243                                                  
+##  basic.4y           : 4176                                                  
+##  basic.6y           : 2292                                                  
+##  (Other)            : 1749                                                  
+##       contact          month       day_of_week    campaign          pdays      
+##  cellular :26144   may    :13769   fri:7827    Min.   : 1.000   Min.   :  0.0  
+##  telephone:15044   jul    : 7174   mon:8514    1st Qu.: 1.000   1st Qu.:999.0  
+##                    aug    : 6178   thu:8623    Median : 2.000   Median :999.0  
+##                    jun    : 5318   tue:8090    Mean   : 2.568   Mean   :962.5  
+##                    nov    : 4101   wed:8134    3rd Qu.: 3.000   3rd Qu.:999.0  
+##                    apr    : 2632               Max.   :56.000   Max.   :999.0  
+##                    (Other): 2016                                               
+##     previous            poutcome      emp.var.rate      cons.price.idx 
+##  Min.   :0.000   failure    : 4252   Min.   :-3.40000   Min.   :92.20  
+##  1st Qu.:0.000   nonexistent:35563   1st Qu.:-1.80000   1st Qu.:93.08  
+##  Median :0.000   success    : 1373   Median : 1.10000   Median :93.75  
+##  Mean   :0.173                       Mean   : 0.08189   Mean   :93.58  
+##  3rd Qu.:0.000                       3rd Qu.: 1.40000   3rd Qu.:93.99  
+##  Max.   :7.000                       Max.   : 1.40000   Max.   :94.77  
+##                                                                        
+##  cons.conf.idx     euribor3m      nr.employed     y          telepcalled     
+##  Min.   :-50.8   Min.   :0.634   Min.   :4964   no :36548   Min.   :0.00000  
+##  1st Qu.:-42.7   1st Qu.:1.344   1st Qu.:5099   yes: 4640   1st Qu.:0.00000  
+##  Median :-41.8   Median :4.857   Median :5191               Median :0.00000  
+##  Mean   :-40.5   Mean   :3.621   Mean   :5167               Mean   :0.03678  
+##  3rd Qu.:-36.4   3rd Qu.:4.961   3rd Qu.:5228               3rd Qu.:0.00000  
+##  Max.   :-26.9   Max.   :5.045   Max.   :5228               Max.   :1.00000  
+## </code></pre>
+<pre class="r"><code># Convert categorical variables to numeric indicators
+# model.matrix creates &#39;dummy&#39; columns for every factor level
+tele_mm &lt;- as.data.frame(model.matrix(~ . - 1, data = tele))</code></pre>
+<pre class="r"><code>normalize &lt;- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+# Apply normalization to the dummy-coded data
+tele_norm &lt;- as.data.frame(lapply(tele_mm, normalize))
+
+# Assuming &#39;yyes&#39; is your target after dummy coding
+target &lt;- tele_mm$yyes 
+
+# Remove the target from the features used for clustering/training
+tele_features &lt;- tele_norm[, !names(tele_norm) %in% c(&quot;yyes&quot;, &quot;yno&quot;)]</code></pre>
+<pre class="r"><code>library(class)
+library(caret)</code></pre>
+<pre><code>## Loading required package: ggplot2</code></pre>
+<pre><code>## Loading required package: lattice</code></pre>
+<pre class="r"><code>set.seed(12345)
+ratio &lt;- 0.7
+
+# 1. Create the row indices
+train_rows &lt;- sample(1:nrow(tele_norm), ratio*nrow(tele_norm))
+
+# 2. Split the features (tele_norm contains all features except the target)
+# We exclude &#39;yyes&#39; and &#39;yno&#39; here as you did in your &#39;tele_features&#39; step
+tele_train &lt;- tele_norm[train_rows, !names(tele_norm) %in% c(&quot;yyes&quot;, &quot;yno&quot;)]
+tele_test  &lt;- tele_norm[-train_rows, !names(tele_norm) %in% c(&quot;yyes&quot;, &quot;yno&quot;)]
+
+# 3. Split the labels (target)
+train_labels &lt;- target[train_rows]
+test_labels  &lt;- target[-train_rows]
+
+# 4. Generate Clusters using K-means
+# We use the full feature set to define the &quot;tribes&quot;
+set.seed(12345)
+tele_clusters &lt;- kmeans(tele_norm[, !names(tele_norm) %in% c(&quot;yyes&quot;, &quot;yno&quot;)], centers = 5)
+
+# 5. Add cluster IDs back to your train/test sets so the &quot;Golden Cluster&quot; logic works
+tele_train$cluster &lt;- tele_clusters$cluster[train_rows]
+tele_test$cluster  &lt;- tele_clusters$cluster[-train_rows]
+
+# --- RENAME FOR YOUR EXISTING CODE ---
+# Your snippet uses &#39;train_data&#39; and &#39;test_data&#39;, so let&#39;s point those to our new sets
+train_data &lt;- tele_train
+test_data  &lt;- tele_test
+
+
+
+# --- STEP 1: IDENTIFY THE GOLDEN CLUSTER ---
+# Calculate the success rate for each cluster using the training labels
+# This finds which &quot;tribe&quot; actually says &#39;yes&#39; most often
+cluster_performance &lt;- tapply(train_labels, train_data$cluster, mean)
+golden_cluster_id &lt;- as.numeric(names(which.max(cluster_performance)))
+
+cat(&quot;The Golden Cluster is Cluster #&quot;, golden_cluster_id, 
+    &quot; with a training success rate of &quot;, round(max(cluster_performance)*100, 2), &quot;%\n&quot;)</code></pre>
+<pre><code>## The Golden Cluster is Cluster # 2  with a training success rate of  23.72 %</code></pre>
+<pre class="r"><code># --- STEP 2: FILTER TEST DATA TO ONLY INCLUDE THE GOLDEN CLUSTER ---
+# We only want to &#39;call&#39; people who fall into this high-probability group
+is_golden_test &lt;- test_data$cluster == golden_cluster_id
+
+# Create a subset of the test data and labels for just this cluster
+test_data_filtered   &lt;- test_data[is_golden_test, ]
+test_labels_filtered &lt;- test_labels[is_golden_test]
+
+# --- STEP 3: RUN KNN ON THE FILTERED DATA ---
+# We still use the full train_data/train_labels so the model has a broad 
+# understanding of patterns, but we only generate predictions for our target cluster.
+predictions_filtered &lt;- knn(train = train_data, 
+                            test  = test_data_filtered, 
+                            cl    = train_labels, 
+                            k     = 18)
+
+# --- STEP 4: EVALUATE &amp; PROFIT CALCULATIONS ---
+# Confusion Matrix for the filtered group
+cm &lt;- confusionMatrix(as.factor(predictions_filtered), 
+                      as.factor(test_labels_filtered), 
+                      positive = &quot;1&quot;)
+
+# True Positives and False Positives from our selective calling strategy
+TP &lt;- cm$table[2,2] 
+FP &lt;- cm$table[2,1] 
+
+# Calculate the baseline for the WHOLE test set (to see how much we improved)
+total_yes_baseline &lt;- sum(test_labels == 1)
+total_calls_baseline &lt;- nrow(test_data)
+baseline_success_rate &lt;- total_yes_baseline / total_calls_baseline
+
+# Baseline Profit (Calling everyone in the test set)
+baseline_profit &lt;- (10 * total_yes_baseline) - (2 * total_calls_baseline)
+
+# Model Success Rate (Precision within the Golden Cluster)
+newsuccessrate &lt;- TP / (TP + FP)
+
+# Your specific efficiency-based cost logic
+diff &lt;- newsuccessrate - baseline_success_rate
+newrrate &lt;- diff * 10000 
+
+pricepercall &lt;- (1000 / (newrrate + 1000)) + 1
+
+# FINAL PROFIT
+# Notice (TP + FP) is much smaller now because we ignored 4 out of 5 clusters!
+profit &lt;- (10 * TP) - (pricepercall * (TP + FP))
+
+# Results Output
+cat(&quot;New Success Rate (Precision):&quot;, round(newsuccessrate * 100, 2), &quot;%\n&quot;)</code></pre>
+<pre><code>## New Success Rate (Precision): 64.53 %</code></pre>
+<pre class="r"><code>cat(&quot;Efficiency Adjusted Price Per Call: $&quot;, round(pricepercall, 2), &quot;\n&quot;)</code></pre>
+<pre><code>## Efficiency Adjusted Price Per Call: $ 1.16</code></pre>
+<pre class="r"><code>cat(&quot;Total Profit from Cluster-Filtered KNN: $&quot;, round(profit, 2), &quot;\n&quot;)</code></pre>
+<pre><code>## Total Profit from Cluster-Filtered KNN: $ 1985.85</code></pre>
 
 
 

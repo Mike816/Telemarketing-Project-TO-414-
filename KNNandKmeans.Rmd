@@ -40,6 +40,37 @@ tele_features <- tele_norm[, !names(tele_norm) %in% c("yyes", "yno")]
 library(class)
 library(caret)
 
+set.seed(12345)
+ratio <- 0.7
+
+# 1. Create the row indices
+train_rows <- sample(1:nrow(tele_norm), ratio*nrow(tele_norm))
+
+# 2. Split the features (tele_norm contains all features except the target)
+# We exclude 'yyes' and 'yno' here as you did in your 'tele_features' step
+tele_train <- tele_norm[train_rows, !names(tele_norm) %in% c("yyes", "yno")]
+tele_test  <- tele_norm[-train_rows, !names(tele_norm) %in% c("yyes", "yno")]
+
+# 3. Split the labels (target)
+train_labels <- target[train_rows]
+test_labels  <- target[-train_rows]
+
+# 4. Generate Clusters using K-means
+# We use the full feature set to define the "tribes"
+set.seed(12345)
+tele_clusters <- kmeans(tele_norm[, !names(tele_norm) %in% c("yyes", "yno")], centers = 5)
+
+# 5. Add cluster IDs back to your train/test sets so the "Golden Cluster" logic works
+tele_train$cluster <- tele_clusters$cluster[train_rows]
+tele_test$cluster  <- tele_clusters$cluster[-train_rows]
+
+# --- RENAME FOR YOUR EXISTING CODE ---
+# Your snippet uses 'train_data' and 'test_data', so let's point those to our new sets
+train_data <- tele_train
+test_data  <- tele_test
+
+
+
 # --- STEP 1: IDENTIFY THE GOLDEN CLUSTER ---
 # Calculate the success rate for each cluster using the training labels
 # This finds which "tribe" actually says 'yes' most often
