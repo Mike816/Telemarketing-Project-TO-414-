@@ -31,24 +31,10 @@ my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
 summary(my_data)
 ```
 
-# convert binary
-```{r}
-# Identify binary factors (2 levels: "yes"/"no" or "no"/"unknown")
-binary_factors <- sapply(my_data, function(x) is.factor(x) && nlevels(x) == 2)
-
-# Convert to 0/1 numeric (yes=1, no=0)
-for(col in names(my_data)[binary_factors]) {
-  my_data[[col]] <- ifelse(my_data[[col]] == "yes", 1, 0)
-}
-
-# Verify
-str(my_data[, names(my_data)[binary_factors]])
-```
-
 # equation verification
 
 ```{r}
-success_rate <- 0.12
+success_rate <- 0.416
 baseline <- 0.11
 
 retention <- 1000+((success_rate - baseline)*10000)
@@ -76,13 +62,13 @@ testing = my_data[-train_rows, ]
 
 ```{r}
 # what is y? 
-linear_model = glm(y ~ ., data = training, family = binomial)
+#linear_model = glm(y ~ ., data = training, family = binomial)
 #stepmodel = step(linear_model, direction = "backward", trace = 0)
 ### Logistic model creation 
 
 
-full_stepmodel = step(linear_model, direction = "backward")
-saveRDS(full_stepmodel, file = "full_stepmodel_without_pdays.rds")
+#full_stepmodel = step(linear_model, direction = "backward")
+#saveRDS(full_stepmodel, file = "full_stepmodel_without_pdays.rds")
 loaded_full_stepmodel <- readRDS("full_stepmodel_without_pdays.rds")
 
 library(caret)
