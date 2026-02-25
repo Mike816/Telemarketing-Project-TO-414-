@@ -772,6 +772,71 @@ Logistic regression models the probability of binary outcomes using the logistic
 
 We discovered that logistic regression gave us a comparable sensitivity to KNN. Additionally, logistic regression gave us the second most profitable, only behind KNN. We hypothesize that logistic regression may be more precise, giving us fewer but highly responsive customers. This leads to high cost per call in additional to higher margin compared to KNN. 
 
+```{r}
+my_data = read.csv("tele.csv")
+
+# Add new flag of whether the customer was contacted
+my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
+
+removes = c("X", "duration", "pdays") # duration is unknown when calling
+to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
+
+my_data[removes] = NULL
+my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
+
+
+summary(my_data)
+```
+
+```{r}
+ratio = 0.7
+set.seed(12345)
+train_rows = sample(1:nrow(my_data), ratio*nrow(my_data))
+training = my_data[train_rows, ]
+testing = my_data[-train_rows, ]
+```
+
+```{r, cache= TRUE}
+linear_model = glm(y ~ ., data = training, family = binomial)
+stepmodel = step(linear_model, direction = "backward", trace = 0)
+
+### Logistic model creation
+
+#full_stepmodel = step(linear_model, direction = "backward")
+#saveRDS(full_stepmodel, file = "full_stepmodel_without_pdays.rds")
+#loaded_full_stepmodel <- readRDS("full_stepmodel_without_pdays.rds")
+
+library(caret)
+pred_class <- predict(stepmodel, testing, type = "response")
+pred_factor <- ifelse(pred_class > 0.2, "yes", "no")
+pred_factor <- factor(pred_factor, levels = levels(training$y))
+
+confusionMatrix(pred_factor, testing$y, positive = "yes")
+
+baseline <- 0.11
+success_rate_glm <- 762/(1039+762)
+retention_glm <- 1000+((success_rate_glm - baseline)*10000)
+whole_training_cost <- 1000
+
+training_cost_per_call <- whole_training_cost/retention_glm
+
+print(training_cost_per_call)
+revenue <- 10*762
+```
+
+```{r}
+cat("Total revenue is:", "$", revenue)
+
+total_cost <- 1801*(1+training_cost_per_call)
+
+
+cat("Total Cost is :", "$", total_cost)
+
+profit <- 10*762 - 1801*(1+training_cost_per_call)
+
+cat("Total Profit is:", "$", profit)
+
+```
 
 Our fine-tuned logistic regression at a threshold of 0.18 sees: 
 - success rate = 40.3% 
