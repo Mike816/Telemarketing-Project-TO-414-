@@ -1,0 +1,488 @@
+---
+title: "FinalReport"
+output: 
+  html_document:
+    self-contained: true
+---
+
+## Team Members
+
+| ![Riccardo Ferrari](https://media.licdn.com/dms/image/v2/D5603AQFflEafFyd_7A/profile-displayphoto-crop_800_800/B56ZyG5l2gIAAI-/0/1771789778338?e=1773273600&v=beta&t=FdsOTImp8CNb_dXLdDQCNNXy_j8SyvSK0DxZqOiT7jI "Riccardo Ferrari") | ![Mike Ye](https://media.licdn.com/dms/image/v2/D5603AQG9mSSoNSuGYA/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1718691249838?e=1773878400&v=beta&t=2luSsNSs3Qjs0-bktoZLajVcQeoDmHPqxcX2cdPo9Z4 "Mike Ye") | ![Daniel Myung](https://drive.google.com/uc?export=view&id=1oX3kGp_eOsgvzug_oAhZMJBVH7htjpfW) | ![Steven Liu](https://media.licdn.com/dms/image/v2/D5603AQENrf52ejSqrw/profile-displayphoto-shrink_800_800/B56ZNpR_MXGsAk-/0/1732638143673?e=1773273600&v=beta&t=bZ6kbfHZRhqgfTI_Boqudv1-jZAX4SIyoGw_Qg6cgnc "Steven Liu") | ![Andrea Demelas](https://drive.google.com/uc?export=view&id=1sfs8yje5_bIvdE-VDuWeBrWkE1UmgzFm) |
+|---|---|---|---|---|
+| **[Riccardo Ferrari](https://www.linkedin.com/in/riccardo-ferrari-2929b722a/)**<br>Financial Analyst | **[Mike Ye](https://www.linkedin.com/in/mike-ye-460923270/)**<br>Team Lead | **[Daniel Myung]()**<br>Data Scientist | **[Steven Liu](https://www.linkedin.com/in/steven-liu-554652244/)**<br>Communication Specialist | **[Andrea Demelas](https://www.linkedin.com/in/andreademelas/)**<br>Business Analyst |
+
+# Executive Summary
+414 Company's call center currently faces several challenges. Call center associates frequently face abusive customers, which leads to extreme employee turnover. Many quit within days, driving high training costs of $1000 per associate. The call center utilizes a blanket strategy in regards to outreach, with standardized talking-points from HR. 
+
+We use data-forward methodologies to assess customer patterns, recommending a targeted approach to achieve beyond break-even profitability. Our approach utilizes supervised and unsupervised algorithmic learning models to calculate profitable target segments, comparing the results to blanket-calling (10% success). We demonstrate our work with each type of algorithm to propose the most profitable strategy.  
+
+# Background
+Telemarketing has evolved from reactive operations to data-driven hubs using analytics for efficiency and customer satisfaction. The industry has applied predictive learning techniques from computer science research to identify and recommend calls to high customer propensity profiles ([Alternyx](recommend calls to "nearest" high-propensity profiles, reducing random dialing)). In the modern age, telemarketing has shifted away from mixed-results intuition into focused, customer-focused campaigns. 
+
+# Data Exploration
+
+- mike data exploration
+	- some metrics 
+- clustering 
+	- showcase clustering graphs
+
+
+We began by taking a deep dive into our data. First, we observe that some metrics regarding our calls:
+
+- 11% success rate
+- -42.9% loss per call made. 
+
+From a purely monetary perspective, with a success rate this low, the optimal course of action is to not make any calls at all until we can increase our success rate per call to at least 20%.
+
+```
+code for that line graph with red line
+```
+
+Next, we deploy clustering, an unsupervised machine learning technique, to create nuanced customer segments within the 414 Company's telemarketing dataset to achieve profitability. Our focus is on calling those segments with a >20% succuss rate. We can also make a prediction model to determine if a call meets the criteria before we make the call to maximize our profit. 
+
+
+We will explore both of these approaches and their predicated outcomes in the following sections.
+
+
+
+# Results 
+
+## Data Cleaning
+We proceed to build supervised learning models with respect to predicting "y", or the propensity of customer profiles. 
+
+We first found the data to require additional cleaning. For instance, we removed column “X” since it had no predictive meaning. We also removed "duration" and "pdays" to ensure a robust predictive approach, without the model being influenced by information it will not know. 
+
+Additionally, we also factorized all other variables, such as "job", "marital", "education", into categorical variables to facilitate fair comparisons. We prepared the data-set for model training by reserving a portion of the data for training and another for verification. We verify consistency between the training and testing data by comparing their means.
+
+
+## Modeling
+Our approach first centered on prioritizing sensitivity, an attribute of models that minimizes false positives, which decreases the amount of non-responsive customers contacted by 414 Company. Amongst the different approaches, we discovered that KNN gave us the highest profit, though not having the highest sensitivity. 
+
+To benchmark a model's financial performance relies firstly on calculating the success rate, that is:
+```
+
+Success Rate = True Positive / (True Positive + False Positive)
+```
+
+Then, using the success rate to quantify cost per call:
+```
+Training cost = 1000 / (1000 + (success_rate - baseline_success_rate) * 10000)
+cost_per_call = Training Cost + 1
+```
+
+And finally calculating the profit: 
+
+```
+Profit = ($10 * True Positive) - (cost_per_call * (True Positive + False Positive))
+```
+We will use this framework with all models going forward. 
+### Best: K Nearest Neighbor (KNN) (without clustering)
+knn in danielsbranch
+
+
+K Nearest Neighbor (KNN) is an algorithm that classifies new customers by finding the K most similar historical customers and predicting based on their majority outcome (buy/no-buy). In short, it creates a "customer similarity map" of where our best customers are located. 
+
+We discovered that KNN gave us the highest profit, though not having the highest sensitivity. We hypothesize that other models, while having higher sensitivities, did not produce a sufficient amount of true positives, leading to lower profit.  
+
+Code
+```{r}
+tele <- read.csv("tele.csv", stringsAsFactors = TRUE)
+
+tele$X <- NULL
+tele$duration <- NULL
+
+tele$telepcalled <-ifelse(tele$pdays == 999, 0,1)
+  
+#removes = c("X", "duration") # duration is unknown when calling
+#to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
+
+#tele[removes] = NULL
+#tele[to_be_factors] = lapply(tele[to_be_factors], factor)
+
+str(tele)
+summary(tele)
+```
+
+
+```{r}
+
+tele_d <- as.data.frame(model.matrix(~ . -1, data = tele))
+
+library(janitor)
+
+tele_d <- clean_names(tele_d)
+
+str(tele_d)
+
+minmax <- function(x){
+  (x - min(x)) / (max(x) - min(x))
+}
+
+#normalized data
+tele_n <- as.data.frame(lapply(tele_d, minmax))
+
+summary(tele_n)
+```
+
+
+### Step 3: Split Data
+
+```{r}
+set.seed(12345)
+ratio <- 0.7
+
+train_rows <- sample(1:nrow(tele_n), ratio*nrow(tele_n))
+
+tele_train <- tele_n[train_rows, ]
+tele_test <- tele_n[-train_rows, ]
+
+```
+
+```{r}
+library(class)
+
+#all rows, all rows except last one (y value)
+#telco_train[,-ncol(telco_train)]
+
+#similarly, all rows, all rows except last one (y value)
+#telco_test[,-ncol(telco_test)]
+
+#this works because the y value is sitting in the LAST column
+
+#cl stands for classification label 0 or 1 (the y value)
+
+# outputs prediction for the test data. Both builds model and uses it
+
+
+tele_pred <- knn(train = tele_train[,(-ncol(tele_train)-1)],
+                  test = tele_test[,(-ncol(tele_test)-1)],
+                  cl = tele_train[,(ncol(tele_train)-1)],
+                  k = 18)
+
+```
+
+### Step 6: Evaluate your prediction
+
+```{r}
+library(caret)
+
+confusionMatrix(as.factor(tele_pred), as.factor(tele_test$y), positive = "1")
+```
+We chose to use k=18, because it was a relatively high k value that still gave us good sensitivity. 
+
+```{r}
+## $10 * TP - 2 *(FP + TP) = profit
+# 10 = contribution margin
+# 2 = cost per made per call
+
+successrate <- sum(tele_test[, ncol(tele_test) - 1]) / nrow(tele_test)
+successrate
+
+FN <- 633
+TN <- 10963
+
+TP <- 743
+FP <- 18
+
+profitnothing <- (10 * (FN + TP)) - (2 * (TN + TP + FN + FP))
+
+newsuccessrate <- TP / (TP + FP)
+newsuccessrate
+
+diff <- newsuccessrate - successrate
+diff
+
+newrrate <- diff * 10000 
+newrrate
+
+pricepercall <- 1000 / (newrrate + 1000)
+pricepercall <- pricepercall + 1
+pricepercall
+
+
+profit <- (10 * TP) - (pricepercall * (TP + FP))
+
+profit
+profitnothing
+
+## 1000 + (successrate - .11) * 10000 / 1000
+```
+
+Assuming that everyone in our model is responsive, we see: 
+
+- success rate = 97.6%
+- cost per call = $1.10
+- profit = $6590.13
+
+### KNN with clusters
+knnandkmeans in danielsbranch
+
+- 13 at $ 1315.76
+- 10 at 1359.13
+- 9 at 1490.16
+- 7 at 919$ profit
+- 5 at 1985.85 profit
+- 4 at $ 2232.14
+- 3 at 2216.48 profit
+- 2 at 2193.67
+- therefore profit is inversely correlated with number of clusters
+
+We also trained KNN using clustering as well. In this approach, we only made predictions about customers who were in the highest propensity cluster. However, this strategy did not perform as well as KNN on its own. 
+
+Code
+```{r}
+
+tele <- read.csv("tele.csv", stringsAsFactors = TRUE)
+
+tele$X <- NULL
+tele$duration <- NULL
+
+tele$telepcalled <-ifelse(tele$pdays == 999, 0,1)
+
+str(tele)
+summary(tele)
+
+# Convert categorical variables to numeric indicators
+# model.matrix creates 'dummy' columns for every factor level
+tele_mm <- as.data.frame(model.matrix(~ . - 1, data = tele))
+```
+
+```{r}
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+# Apply normalization to the dummy-coded data
+tele_norm <- as.data.frame(lapply(tele_mm, normalize))
+
+# Assuming 'yyes' is your target after dummy coding
+target <- tele_mm$yyes 
+
+# Remove the target from the features used for clustering/training
+tele_features <- tele_norm[, !names(tele_norm) %in% c("yyes", "yno")]
+```
+
+```{r}
+
+library(class)
+library(caret)
+
+set.seed(12345)
+ratio <- 0.7
+
+train_rows <- sample(1:nrow(tele_norm), ratio*nrow(tele_norm))
+
+tele_train <- tele_norm[train_rows, !names(tele_norm) %in% c("yyes", "yno")]
+tele_test  <- tele_norm[-train_rows, !names(tele_norm) %in% c("yyes", "yno")]
+
+train_labels <- target[train_rows]
+test_labels  <- target[-train_rows]
+
+#Generate Clusters using K-means
+set.seed(12345)
+tele_clusters <- kmeans(tele_norm[, !names(tele_norm) %in% c("yyes", "yno")], centers = 4)
+
+tele_train$cluster <- tele_clusters$cluster[train_rows]
+tele_test$cluster  <- tele_clusters$cluster[-train_rows]
+
+train_data <- tele_train
+test_data  <- tele_test
+
+cluster_performance <- tapply(train_labels, train_data$cluster, mean)
+golden_cluster_id <- as.numeric(names(which.max(cluster_performance)))
+
+cat("The Best Cluster is Cluster #", golden_cluster_id, 
+    " with a training success rate of ", round(max(cluster_performance)*100, 2), "%\n")
+
+is_golden_test <- test_data$cluster == golden_cluster_id
+
+test_data_filtered   <- test_data[is_golden_test, ]
+test_labels_filtered <- test_labels[is_golden_test]
+
+# only making predictions for the target cluster
+predictions_filtered <- knn(train = train_data, 
+                            test  = test_data_filtered, 
+                            cl    = train_labels, 
+                            k     = 18)
+
+cm <- confusionMatrix(as.factor(predictions_filtered), 
+                      as.factor(test_labels_filtered), 
+                      positive = "1")
+
+TP <- cm$table[2,2] 
+FP <- cm$table[2,1] 
+
+total_yes_baseline <- sum(test_labels == 1)
+total_calls_baseline <- nrow(test_data)
+baseline_success_rate <- total_yes_baseline / total_calls_baseline
+
+# Baseline Profit (Calling everyone in the test set)
+baseline_profit <- (10 * total_yes_baseline) - (2 * total_calls_baseline)
+
+# Model Success Rate
+newsuccessrate <- TP / (TP + FP)
+
+diff <- newsuccessrate - baseline_success_rate
+newrrate <- diff * 10000 
+
+pricepercall <- (1000 / (newrrate + 1000)) + 1
+
+profit <- (10 * TP) - (pricepercall * (TP + FP))
+
+# Results Output
+cat("New Success Rate (Precision):", round(newsuccessrate * 100, 2), "%\n")
+cat("Efficiency Adjusted Price Per Call: $", round(pricepercall, 2), "\n")
+cat("Total Profit from Cluster-Filtered KNN: $", round(profit, 2), "\n")
+
+```
+
+Using this method, we identify that four clusters at our constant of 18 neighbors was the most profitable: 
+- success rate = 60.2%
+- Cost per call = $1.17
+- profit = $2232.14 dollars.
+
+Profit appears inversely correlated with the number of clusters as well. As more clusters appear, profits decrease, with an unusual increase and subsequent plateau after eight clusters. We hypothesize that larger clusters may contain a mix of high-propensity and low-propensity customers, and after a certain number of clusters, the algorithm identifies a mostly profitable segment. 
+### SVM with RBF
+svm kernel testing in danielsbranch
+
+
+Support Vector Machine (SVM) is a supervised algorithm that constructs a maximum-margin plane that separates categories, drawn using linear (vanilla), polynomial (poly), or 3D lines (RBF). In short, SVM finds the best dividing line between customers who buy term deposits and those who don't, making future predictions are more accurate. 
+
+We discovered that SVM using RBF gave us the highest sensitivity amongst the SVM variants. We hypothesize that other variants such as linear (vanilla) were not able to capture the nuances of the data or were not suitable for the specific dataset. 
+
+
+code
+```{r}
+# my_data <- read.csv("tele.csv")
+
+tele <- read.csv("tele.csv", stringsAsFactors = TRUE)
+
+tele$X <- NULL
+tele$duration <- NULL
+
+tele$telepcalled <-ifelse(tele$pdays == 999, 0,1)
+  
+#my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
+
+str(tele)
+summary(tele)
+```
+
+```{r, cache = TRUE}
+ratio <- 0.7
+set.seed(12345)
+train_rows <- sample(1:nrow(tele), ratio*nrow(tele))
+
+tele_train <- tele[train_rows,]
+tele_test <- tele[-train_rows,]
+
+library(kernlab)
+
+# radial basis rbfdot
+#tanhdotmodel <- ksvm(y ~ ., data = tele_train, kernel = "tanhdot")
+#polydotmodel <- ksvm(y ~ ., data = tele_train, kernel = "polydot")
+#vanilladotmodel <- ksvm(y ~ ., data = tele_train, kernel = "vanilladot")
+#aplacedotmodel <- ksvm(y ~ ., data = tele_train, kernel = "laplacedot")
+#besseldotmodel <- ksvm(y ~ ., data = tele_train, kernel = "besseldot")
+#anovadotmodel <- ksvm(y ~ ., data = tele_train, kernel = "anovadot")
+#splinedotmodel <- ksvm(y ~ ., data = tele_train, kernel = "splinedot")
+
+rbfdotmodel <- ksvm(y ~ ., data = tele_train, kernel = "rbfdot")
+saveRDS(rbfdotmodel, file = "rbf_model.rds")
+
+#saveRDS(tanhdotmodel, file = "tanhdot.rds")
+#saveRDS(polydotmodel, file = "polydot.rds")
+#saveRDS(vanilladotmodel, file = "vanilla.rds")
+#saveRDS(laplacedotmodel, file = "laplace.rds")
+#saveRDS(besseldotmodel, file = "bessel.rds")
+#saveRDS(anovadotmodel, file = "anova.rds")
+#saveRDS(splinedotmodel, file = "splinedot.rds")
+
+
+loaded_tan <- readRDS(file = "tanhdot.rds")
+loaded_poly <- readRDS(file = "polydot.rds")
+loaded_vanilla <- readRDS(file = "vanilla.rds")
+loaded_laplace <- readRDS(file = "laplace.rds")
+loaded_bessel <- readRDS(file = "bessel.rds")
+loaded_anova <- readRDS(file = "anova.rds")
+loaded_spline <- readRDS(file = "splinedot.rds")
+loaded_rbf <- readRDS(file = "rbf_model.rds")
+
+
+tanh_pred <- predict(loaded_tan, tele_test)
+poly_pred <- predict(loaded_poly, tele_test)
+v_pred <- predict(loaded_vanilla, tele_test)
+l_pred <- predict(loaded_laplace, tele_test)
+b_pred <- predict(loaded_bessel, tele_test)
+a_pred <- predict(loaded_anova, tele_test)
+s_pred <- predict(loaded_spline, tele_test)
+rbf_pred  <- predict(loaded_rbf, tele_test)
+
+
+#table(v_pred, tele_test$y)
+
+## NOT A BINARY PREDICTION, so don't use confusion matrix
+
+## this time, use confusion matrix because this is a binary prediction
+library(caret)
+confusionMatrix(as.factor(tanh_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(poly_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(v_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(l_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(b_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(a_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(s_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(rbf_pred), as.factor(tele_test$y), positive = "yes")
+```
+       
+```{r}
+FN <- 1056
+TN <- 10815
+
+TP <- 320
+FP <- 166 
+
+successrate <- (FN + TP) / (FN + TN + TP + FP)
+successrate
+
+profitnothing <- (10 * (FN + TP)) - (2 * (TN + TP + FN + FP))
+
+newsuccessrate <- TP / (TP + FP)
+newsuccessrate
+
+diff <- newsuccessrate - successrate
+diff
+
+newrrate <- diff * 10000 
+newrrate
+
+pricepercall <- 1000 / (newrrate + 1000)
+pricepercall <- pricepercall + 1
+pricepercall
+
+
+profit <- (10 * TP) - (pricepercall * (TP + FP))
+
+profit
+profitnothing
+
+```
+
+Using SVM with RBF, we see:
+
+- success rate = 65.8%
+- Cost per call = $1.15
+- profit = $2638.89 dollars.
+
+### Logistic Regression
+part a in stevenliu branch
+
+Logistic regression models the probability of binary outcomes using the logistic (sigmoid) function, incorporating customer characteristics such as age, job type, and loan status to identify how likely each customer will be responsive.  
+
+We discovered that logistic regression gave us a comparable sensitivity to KNN. Additionally, logistic regression gave us the second most profitable, only behind KNN. We hypothesize that logistic regression may be more precise, giving us fewer but highly responsive customers. This leads to high cost per call in additional to higher margin compared to KNN. 
+
+
+Our fine-tuned logistic regression at a threshold of 0.18 sees: 
+- success rate = 40.3% 
+- cost per call = 1.25
+- profit = 5439.79 
