@@ -21,6 +21,7 @@ Telemarketing has evolved from reactive operations to data-driven hubs using ana
 
 # Data Exploration
 
+<<<<<<< HEAD
 - mike data exploration
 	- some metrics 
 - clustering 
@@ -37,6 +38,233 @@ From a purely monetary perspective, with a success rate this low, the optimal co
 ```
 code for that line graph with red line
 ```
+=======
+### Reading Data and Data Cleaning
+
+```{r}
+my_data = read.csv("tele.csv")
+
+# Add new flag of whether the customer was contacted
+my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
+
+removes = c("X", "duration", "pdays") # duration is unknown when calling
+to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
+
+my_data[removes] = NULL
+my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
+
+
+summary(my_data)
+```
+We proceed to build supervised learning models with respect to predicting "y", or the propensity of customer profiles. 
+
+We first found the data to require additional cleaning. For instance, we removed column “X” since it had no predictive meaning. We also removed "duration" to ensure a robust predictive approach, without the model being influenced by information it will not know. 
+
+Additionally, we also factorized all other variables, such as "job", "marital", "education", into categorical variables to facilitate fair comparisons. We prepared the data-set for model training by reserving a portion of the data for training and another for verification. We verify consistency between the training and testing data by comparing their means.
+
+### Data Visualization
+
+**Current profitability**
+```{r}
+reward_per_success = 10
+training_cost = 1000
+base_call_cost = 1
+
+rates = seq(0.05, 1, by = 0.05)
+
+calls_before_quit = 1000 + pmax(0, (rates - 0.11) * 10000)
+cost_per_call = base_call_cost + training_cost / calls_before_quit
+
+percent_profit = ((rates * reward_per_success - cost_per_call) / cost_per_call) * 100
+
+profit_df = data.frame(
+  success_rate = rates,
+  percent_profit = percent_profit
+)
+
+library(ggplot2)
+library(scales)
+
+ggplot(profit_df, aes(success_rate, percent_profit)) +
+  geom_line(linewidth = 1) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_x_continuous(labels = percent) +
+  scale_y_continuous(labels = function(x) paste0(x, "%")) +
+  labs(
+    title = "Percent Profit per Call vs Success Rate",
+    x = "Success Rate",
+    y = "Percent Profit per Call"
+  )
+```
+
+As shown in the figure above, the percent profitability per call increases approximately linearly with the success rate. Since the break even success rate is 20%, any call with more than a 20% chance of success will generate profit. Therefore, we should make any call if the customer has 20% or more probability to buy our product. 
+
+However, this is not the case with our firm currently. This is where our profitability currently stands:
+```{r}
+actual_rate = mean(my_data$y == "yes")
+
+actual_calls = 1000 + pmax(0, (actual_rate - 0.11) * 10000)
+actual_cost_per_call = base_call_cost + training_cost / actual_calls
+
+actual_profit = ((actual_rate * reward_per_success - actual_cost_per_call) / actual_cost_per_call) * 100
+
+ggplot(profit_df, aes(success_rate, percent_profit)) +
+  geom_line(linewidth = 1) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_hline(yintercept = actual_profit, color = "red", linetype = "dotted", linewidth = 1.2) +
+  annotate("text",
+           x = 0.8,
+           y = actual_profit,
+           label = paste0("Actual profit = ", round(actual_profit, 1), "%"),
+           color = "red",
+           vjust = 1.5) +
+  scale_x_continuous(labels = percent) +
+  scale_y_continuous(labels = function(x) paste0(x, "%")) +
+  labs(
+    title = "Percent Profit per Call vs Success Rate",
+    x = "Success Rate",
+    y = "Percent Profit per Call"
+  )
+```
+
+Our calls have a 11% success rate, which equates to a -42.9% loss per call made. From a purely monetary perspective, with a success rate this low, the optimal course of action is to not make any calls at all until we can increase our success rate per call to at least 20%.
+
+We believe we can achieve this by clustering our customer base into several groups, and only focus on calling those with a >20% succuss rate. We can also make a prediction model to determine if a call meets the critieria before we make the call to maximize our profit. We will explore both of these approachs and their predicted outcomes in the following sections.
+
+For now, we seek to understand which of the factors influence a call's success rate the most in an attempt in increase our call success rates:
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(scales)
+library(tidyr)
+
+## We want to check whether there is a strong relationship between y and the other variables by looking at the correlation heatmap.To make this possible, we first recode y as a binary variable (0 for no, 1 for yes) and then include this binary version of y in the correlation matrix that we plot as a heatmap.
+
+my_data$y_bin = ifelse(my_data$y == "yes", 1, 0)
+
+num_vars = c("y_bin","age","campaign","previous", "emp.var.rate","cons.price.idx","cons.conf.idx","euribor3m","nr.employed")
+
+num_df = my_data %>% select(all_of(num_vars))
+corr = cor(num_df, use="pairwise.complete.obs")
+
+corr_long = as.data.frame(as.table(corr)) %>%
+  rename(var1 = Var1, var2 = Var2, r = Freq)
+
+ggplot(corr_long, aes(var1, var2, fill=r)) +
+  geom_tile() +
+  coord_equal() + #square grid
+  theme(axis.text.x = element_text(angle=45, hjust=1)) + #rotates the bottom labels to prevent overlap
+  labs(title="Correlation heatmap", x=NULL, y=NULL)
+```
+
+We can clearly see from the heatmap that there is no strong correlation between a call's success rate and the other numerical variables; at least, no relationship as a whole is large enough to be easily visible in the graph. 
+
+Despite the groups as a whole not having significant correlation with success rate, there still exists sigificant factors within each attribute that influences it. One of the most significant relationship we have found is between age and call succuess rate:
+
+```{r}
+analyze_binary_by_group <- function(data, var, target,
+                                    breaks = NULL,
+                                    bin_width = NULL) {
+  df <- data
+ 
+  if (!is.null(breaks)) {
+    df$group_var <- cut(df[[var]], breaks = breaks, include.lowest = TRUE)
+  } else if (!is.null(bin_width)) {
+    rng <- range(df[[var]], na.rm = TRUE)
+    df$group_var <- cut(df[[var]],
+                        breaks = seq(rng[1], rng[2], by = bin_width),
+                        include.lowest = TRUE)
+  } else {
+    df$group_var <- as.factor(df[[var]])
+  }
+ 
+  df <- df %>%
+    filter(!is.na(group_var),
+           !is.na(.data[[target]]))
+ 
+  data_summary <- df %>%
+    group_by(group_var) %>%
+    summarise(
+      n = n(),
+      yes = sum(.data[[target]]),
+      .groups = "drop"
+    ) %>%
+    rowwise() %>%
+    mutate(
+      p = yes/n,
+      lower = ifelse(n > 1, prop.test(yes, n)$conf.int[1], NA),
+      upper = ifelse(n > 1, prop.test(yes, n)$conf.int[2], NA)
+    )
+ 
+  plot <- ggplot(data_summary, aes(x = group_var, y = p)) +
+    geom_col(fill = "steelblue") +
+    geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
+    geom_hline(yintercept = 0.2,
+               color = "red",
+               linetype = "dashed",
+               linewidth = 1) +
+    labs(title = paste("Proportion of", target, "by", var),
+         x = var,
+         y = "Proportion (95% CI)") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ 
+  print(plot)
+ 
+  return(data_summary) #doesn't really matter
+}
+
+
+```
+
+```{r}
+v="age"
+analyze_binary_by_group(
+    data   = my_data,
+    var    = v,
+    target = "y_bin",
+    breaks = seq(min(my_data[[v]], na.rm = TRUE),
+                 max(my_data[[v]], na.rm = TRUE),
+                 length.out = 10))
+```
+We have calculated a 95% confidence interval for the true value of each subgroup of the age data as indicated by the black bars on the graph. A confidence interval above the red break-even line indicates that the subgroup is profitable to call. 
+
+As we can see, every group above the age of 62 has a more than **40%** call success rate. This makes them highly valuable customers for our calls. We should priotize calling these people before all other groups. The other age bracket of interest is from 17-26, with a call success rate confidence interval including the  break-even threshold of 20%. We should also pay attention to this group as they have the highest *potential* to become profitable and be our future customers. 
+
+```{r}
+v="previous"
+analyze_binary_by_group(
+    data   = my_data,
+    var    = v,
+    target = "y_bin",
+    breaks = seq(min(my_data[[v]], na.rm = TRUE),
+                 max(my_data[[v]], na.rm = TRUE),
+                 length.out = 8))
+```
+
+Repeated previous contact also seems to be a significant contributor to the success rate. There seem to be a high correlation between multiple previous calls and success rate. This doesn't necessarily indicate that we should repeatably call the same unenthusiastic customer but rather use more resources on calling repeat customers or those who seem to be amenable to our product. 
+
+
+```{r}
+good_num_vars = c("euribor3m")
+
+for (v in good_num_vars) {
+  analyze_binary_by_group(
+    data   = my_data,
+    var    = v,
+    target = "y_bin",
+    breaks = seq(min(my_data[[v]], na.rm = TRUE),
+                 max(my_data[[v]], na.rm = TRUE),
+                 length.out = 10)  
+  )
+}
+                   
+```
+
+Another interesting find was the correlation between interests rates and our call success rate. It seems lower interests rates (<3%) dramatically increase our call success rate while high interest rates (>3.57) lowers them to the point of unsuitability. This would suggest that we should increase our call output during times with lower interest rates, and vice versa.
+>>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
 
 Next, we deploy clustering, an unsupervised machine learning technique, to create nuanced customer segments within the 414 Company's telemarketing dataset to achieve profitability. Our focus is on calling those segments with a >20% succuss rate. We can also make a prediction model to determine if a call meets the criteria before we make the call to maximize our profit. 
 
@@ -47,6 +275,7 @@ We will explore both of these approaches and their predicated outcomes in the fo
 
 # Results 
 
+<<<<<<< HEAD
 ## Data Cleaning
 We proceed to build supervised learning models with respect to predicting "y", or the propensity of customer profiles. 
 
@@ -55,6 +284,8 @@ We first found the data to require additional cleaning. For instance, we removed
 Additionally, we also factorized all other variables, such as "job", "marital", "education", into categorical variables to facilitate fair comparisons. We prepared the data-set for model training by reserving a portion of the data for training and another for verification. We verify consistency between the training and testing data by comparing their means.
 
 
+=======
+>>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
 ## Modeling
 Our approach first centered on prioritizing sensitivity, an attribute of models that minimizes false positives, which decreases the amount of non-responsive customers contacted by 414 Company. Amongst the different approaches, we discovered that KNN gave us the highest profit, though not having the highest sensitivity. 
 
@@ -84,6 +315,7 @@ K Nearest Neighbor (KNN) is an algorithm that classifies new customers by findin
 
 We discovered that KNN gave us the highest profit, though not having the highest sensitivity. We hypothesize that other models, while having higher sensitivities, did not produce a sufficient amount of true positives, leading to lower profit.  
 
+<<<<<<< HEAD
 Code
 ```{r}
 tele <- read.csv("tele.csv", stringsAsFactors = TRUE)
@@ -206,6 +438,10 @@ profit
 profitnothing
 
 ## 1000 + (successrate - .11) * 10000 / 1000
+=======
+```
+code
+>>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
 ```
 
 Assuming that everyone in our model is responsive, we see: 
@@ -228,6 +464,7 @@ knnandkmeans in danielsbranch
 - therefore profit is inversely correlated with number of clusters
 
 We also trained KNN using clustering as well. In this approach, we only made predictions about customers who were in the highest propensity cluster. However, this strategy did not perform as well as KNN on its own. 
+<<<<<<< HEAD
 
 Code
 ```{r}
@@ -336,6 +573,11 @@ cat("Total Profit from Cluster-Filtered KNN: $", round(profit, 2), "\n")
 
 ```
 
+=======
+```
+code
+```
+>>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
 Using this method, we identify that four clusters at our constant of 18 neighbors was the most profitable: 
 - success rate = 60.2%
 - Cost per call = $1.17
@@ -350,6 +592,7 @@ Support Vector Machine (SVM) is a supervised algorithm that constructs a maximum
 
 We discovered that SVM using RBF gave us the highest sensitivity amongst the SVM variants. We hypothesize that other variants such as linear (vanilla) were not able to capture the nuances of the data or were not suitable for the specific dataset. 
 
+<<<<<<< HEAD
 
 code
 ```{r}
@@ -468,6 +711,11 @@ profitnothing
 
 ```
 
+=======
+```
+code
+```
+>>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
 Using SVM with RBF, we see:
 
 - success rate = 65.8%
@@ -485,4 +733,8 @@ We discovered that logistic regression gave us a comparable sensitivity to KNN. 
 Our fine-tuned logistic regression at a threshold of 0.18 sees: 
 - success rate = 40.3% 
 - cost per call = 1.25
+<<<<<<< HEAD
 - profit = 5439.79 
+=======
+- profit = 5439.79 
+>>>>>>> 5edea77c6642021a5726406361269b52a9f13a93

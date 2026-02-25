@@ -7,13 +7,13 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(warn=-1)
 ```
 
 ### Reading Data and Data Cleaning
 
 ```{r}
 my_data = read.csv("tele.csv")
-str(my_data)
 
 # Add new flag of whether the customer was contacted
 my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
@@ -66,7 +66,7 @@ ggplot(profit_df, aes(success_rate, percent_profit)) +
 
 As shown in the figure above, the percent profitability per call increases approximately linearly with the success rate. Since the break even success rate is 20%, any call with more than a 20% chance of success will generate profit. Therefore, we should make any call if the customer has 20% or more probability to buy our product. 
 
-However, this is not the case with our firm currently. This is where our profitability current exists.
+However, this is not the case with our firm currently. This is where our profitability currently stands:
 ```{r}
 actual_rate = mean(my_data$y == "yes")
 
@@ -97,7 +97,7 @@ ggplot(profit_df, aes(success_rate, percent_profit)) +
 
 Our calls have a 11% success rate, which equates to a -42.9% loss per call made. From a purely monetary perspective, with a success rate this low, the optimal course of action is to not make any calls at all until we can increase our success rate per call to at least 20%.
 
-We believe we can achieve this by clustering our customer base into several groups, and only focus on calling those with a >20% succuss rate. We can also make a prediction model to determine if a call meets the critieria before we make the call to maximize our profit. We will explore both of these approachs and their predicited outcomes in the following sections.
+We believe we can achieve this by clustering our customer base into several groups, and only focus on calling those with a >20% succuss rate. We can also make a prediction model to determine if a call meets the critieria before we make the call to maximize our profit. We will explore both of these approachs and their predicted outcomes in the following sections.
 
 For now, we seek to understand which of the factors influence a call's success rate the most in an attempt in increase our call success rates:
 
@@ -126,27 +126,109 @@ ggplot(corr_long, aes(var1, var2, fill=r)) +
   labs(title="Correlation heatmap", x=NULL, y=NULL)
 ```
 
-We can clearly see from the heatmap that there is no strong correlation between a call's success rate and the other numerical variables; at least, no relationship as a whole is large enough to be easily visible in the graph.
+We can clearly see from the heatmap that there is no strong correlation between a call's success rate and the other numerical variables; at least, no relationship as a whole is large enough to be easily visible in the graph. 
 
-Despite the groups as a whole not having sigificant correlation with success rate, there still exists sigificant factors within each attribute that influences it. One of the most sigificant relationship we have found is between age and call succuess rate:
+Despite the groups as a whole not having significant correlation with success rate, there still exists sigificant factors within each attribute that influences it. One of the most significant relationship we have found is between age and call succuess rate:
 
 ```{r}
-my_data %>%
-  mutate(age_group = cut(age, breaks = seq(20, 90, by = 5))) %>%
-  group_by(age_group) %>%
-  summarise(p_yes = mean(y_bin, na.rm = TRUE) * 100,
-            .groups = "drop") %>%
-  ggplot(aes(x = age_group, y = p_yes)) +
-  geom_col(fill = "steelblue", color = "white") +
+analyze_binary_by_group <- function(data, var, target,
+                                    breaks = NULL,
+                                    bin_width = NULL) {
+  df <- data
+ 
+  if (!is.null(breaks)) {
+    df$group_var <- cut(df[[var]], breaks = breaks, include.lowest = TRUE)
+  } else if (!is.null(bin_width)) {
+    rng <- range(df[[var]], na.rm = TRUE)
+    df$group_var <- cut(df[[var]],
+                        breaks = seq(rng[1], rng[2], by = bin_width),
+                        include.lowest = TRUE)
+  } else {
+    df$group_var <- as.factor(df[[var]])
+  }
+ 
+  df <- df %>%
+    filter(!is.na(group_var),
+           !is.na(.data[[target]]))
+ 
+  data_summary <- df %>%
+    group_by(group_var) %>%
+    summarise(
+      n = n(),
+      yes = sum(.data[[target]]),
+      .groups = "drop"
+    ) %>%
+    rowwise() %>%
+    mutate(
+      p = yes/n,
+      lower = ifelse(n > 1, prop.test(yes, n)$conf.int[1], NA),
+      upper = ifelse(n > 1, prop.test(yes, n)$conf.int[2], NA)
+    )
+ 
+  plot <- ggplot(data_summary, aes(x = group_var, y = p)) +
+    geom_col(fill = "steelblue") +
+    geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
+    geom_hline(yintercept = 0.2,
+               color = "red",
+               linetype = "dashed",
+               linewidth = 1) +
+    labs(title = paste("Proportion of", target, "by", var),
+         x = var,
+         y = "Proportion (95% CI)") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ 
+  print(plot)
+ 
+  return(data_summary) #doesn't really matter
+}
 
-  # red 20% reference line
-  geom_hline(yintercept = 20, color = "red", linetype = "dashed", linewidth = 1) +
 
-  labs(title = "Percentage of 'yes' by age group",
-       x = "Age group", y = "Percentage of yes (%)") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-As we can see, every group above the age of 60 has a more than **40%** call success rate. This makes them highly valuable customers for our calls. We should priotize calling these people before all other groups. The other age bracket of interest is from 20-25, with a call success rate just under the break-even threshold of 20%. We should also pay attention to this group as they have the highest *potential* to become profitable and be our future customers. 
+```{r}
+v="age"
+analyze_binary_by_group(
+    data   = my_data,
+    var    = v,
+    target = "y_bin",
+    breaks = seq(min(my_data[[v]], na.rm = TRUE),
+                 max(my_data[[v]], na.rm = TRUE),
+                 length.out = 10))
+```
+We have calculated a 95% confidence interval for the true value of each subgroup of the age data as indicated by the black bars on the graph. A confidence interval above the red break-even line indicates that the subgroup is profitable to call. 
+
+As we can see, every group above the age of 62 has a more than **40%** call success rate. This makes them highly valuable customers for our calls. We should priotize calling these people before all other groups. The other age bracket of interest is from 17-26, with a call success rate confidence interval including the  break-even threshold of 20%. We should also pay attention to this group as they have the highest *potential* to become profitable and be our future customers. 
+
+```{r}
+v="previous"
+analyze_binary_by_group(
+    data   = my_data,
+    var    = v,
+    target = "y_bin",
+    breaks = seq(min(my_data[[v]], na.rm = TRUE),
+                 max(my_data[[v]], na.rm = TRUE),
+                 length.out = 8))
+```
+
+Repeated previous contact also seems to be a significant contributor to the success rate. There seem to be a high correlation between multiple previous calls and success rate. This doesn't necessarily indicate that we should repeatably call the same unenthusiastic customer but rather use more resources on calling repeat customers or those who seem to be amenable to our product. 
+
+
+```{r}
+good_num_vars = c("euribor3m")
+
+for (v in good_num_vars) {
+  analyze_binary_by_group(
+    data   = my_data,
+    var    = v,
+    target = "y_bin",
+    breaks = seq(min(my_data[[v]], na.rm = TRUE),
+                 max(my_data[[v]], na.rm = TRUE),
+                 length.out = 10)  
+  )
+}
+                   
+```
+
+Another interesting find was the correlation between interests rates and our call success rate. It seems lower interests rates (<3%) dramatically increase our call success rate while high interest rates (>3.57) lowers them to the point of unsuitability. This would suggest that we should increase our call output during times with lower interest rates, and vice versa. 
 
 
