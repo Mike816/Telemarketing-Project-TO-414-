@@ -21,7 +21,6 @@ Telemarketing has evolved from reactive operations to data-driven hubs using ana
 
 # Data Exploration
 
-<<<<<<< HEAD
 - mike data exploration
 	- some metrics 
 - clustering 
@@ -38,7 +37,6 @@ From a purely monetary perspective, with a success rate this low, the optimal co
 ```
 code for that line graph with red line
 ```
-=======
 ### Reading Data and Data Cleaning
 
 ```{r}
@@ -270,7 +268,6 @@ for (v in good_num_vars) {
 ```
 
 Another interesting find was the correlation between interests rates and our call success rate. It seems lower interests rates (<3%) dramatically increase our call success rate while high interest rates (>3.57) lowers them to the point of unsuitability. This would suggest that we should increase our call output during times with lower interest rates, and vice versa.
->>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
 
 Next, we deploy clustering, an unsupervised machine learning technique, to create nuanced customer segments within the 414 Company's telemarketing dataset to achieve profitability. Our focus is on calling those segments with a >20% succuss rate. We can also make a prediction model to determine if a call meets the criteria before we make the call to maximize our profit. 
 
@@ -281,7 +278,6 @@ We will explore both of these approaches and their predicated outcomes in the fo
 
 # Results 
 
-<<<<<<< HEAD
 ## Data Cleaning
 We proceed to build supervised learning models with respect to predicting "y", or the propensity of customer profiles. 
 
@@ -290,8 +286,6 @@ We first found the data to require additional cleaning. For instance, we removed
 Additionally, we also factorized all other variables, such as "job", "marital", "education", into categorical variables to facilitate fair comparisons. We prepared the data-set for model training by reserving a portion of the data for training and another for verification. We verify consistency between the training and testing data by comparing their means.
 
 
-=======
->>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
 ## Modeling
 Our approach first centered on prioritizing sensitivity, an attribute of models that minimizes false positives, which decreases the amount of non-responsive customers contacted by 414 Company. Amongst the different approaches, we discovered that KNN gave us the highest profit, though not having the highest sensitivity. 
 
@@ -321,7 +315,6 @@ K Nearest Neighbor (KNN) is an algorithm that classifies new customers by findin
 
 We discovered that KNN gave us the highest profit, though not having the highest sensitivity. We hypothesize that other models, while having higher sensitivities, did not produce a sufficient amount of true positives, leading to lower profit.  
 
-<<<<<<< HEAD
 Code
 ```{r}
 tele <- read.csv("tele.csv", stringsAsFactors = TRUE)
@@ -444,11 +437,8 @@ profit
 profitnothing
 
 ## 1000 + (successrate - .11) * 10000 / 1000
-=======
 ```
-code
->>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
-```
+
 
 Assuming that everyone in our model is responsive, we see: 
 
@@ -470,7 +460,6 @@ knnandkmeans in danielsbranch
 - therefore profit is inversely correlated with number of clusters
 
 We also trained KNN using clustering as well. In this approach, we only made predictions about customers who were in the highest propensity cluster. However, this strategy did not perform as well as KNN on its own. 
-<<<<<<< HEAD
 
 Code
 ```{r}
@@ -579,11 +568,8 @@ cat("Total Profit from Cluster-Filtered KNN: $", round(profit, 2), "\n")
 
 ```
 
-=======
-```
 code
-```
->>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
+
 Using this method, we identify that four clusters at our constant of 18 neighbors was the most profitable: 
 - success rate = 60.2%
 - Cost per call = $1.17
@@ -598,7 +584,6 @@ Support Vector Machine (SVM) is a supervised algorithm that constructs a maximum
 
 We discovered that SVM using RBF gave us the highest sensitivity amongst the SVM variants. We hypothesize that other variants such as linear (vanilla) were not able to capture the nuances of the data or were not suitable for the specific dataset. 
 
-<<<<<<< HEAD
 
 code
 ```{r}
@@ -717,11 +702,87 @@ profitnothing
 
 ```
 
-=======
-```
+
 code
+```{r}
+# my_data <- read.csv("tele.csv")
+
+tele <- read.csv("tele.csv", stringsAsFactors = TRUE)
+
+tele$X <- NULL
+tele$duration <- NULL
+
+tele$telepcalled <-ifelse(tele$pdays == 999, 0,1)
+  
+#my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
+
+str(tele)
+summary(tele)
 ```
->>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
+```{r, cache = TRUE}
+ratio <- 0.7
+set.seed(12345)
+train_rows <- sample(1:nrow(tele), ratio*nrow(tele))
+
+tele_train <- tele[train_rows,]
+tele_test <- tele[-train_rows,]
+
+library(kernlab)
+
+# radial basis rbfdot
+#tanhdotmodel <- ksvm(y ~ ., data = tele_train, kernel = "tanhdot")
+#polydotmodel <- ksvm(y ~ ., data = tele_train, kernel = "polydot")
+#vanilladotmodel <- ksvm(y ~ ., data = tele_train, kernel = "vanilladot")
+#laplacedotmodel <- ksvm(y ~ ., data = tele_train, kernel = "laplacedot")
+#besseldotmodel <- ksvm(y ~ ., data = tele_train, kernel = "besseldot")
+#anovadotmodel <- ksvm(y ~ ., data = tele_train, kernel = "anovadot")
+#splinedotmodel <- ksvm(y ~ ., data = tele_train, kernel = "splinedot")
+
+#saveRDS(tanhdotmodel, file = "tanhdot.rds")
+#saveRDS(polydotmodel, file = "polydot.rds")
+#saveRDS(vanilladotmodel, file = "vanilla.rds")
+#saveRDS(laplacedotmodel, file = "laplace.rds")
+#saveRDS(besseldotmodel, file = "bessel.rds")
+#saveRDS(anovadotmodel, file = "anova.rds")
+#saveRDS(splinedotmodel, file = "splinedot.rds")
+
+
+loaded_tan <- readRDS(file = "tanhdot.rds")
+loaded_poly <- readRDS(file = "polydot.rds")
+loaded_vanilla <- readRDS(file = "vanilla.rds")
+loaded_laplace <- readRDS(file = "laplace.rds")
+loaded_bessel <- readRDS(file = "bessel.rds")
+loaded_anova <- readRDS(file = "anova.rds")
+loaded_spline <- readRDS(file = "splinedot.rds")
+loaded_rbf <- readRDS(file = "rbf_model.rds")
+
+
+tanh_pred <- predict(loaded_tan, tele_test)
+poly_pred <- predict(loaded_poly, tele_test)
+v_pred <- predict(loaded_vanilla, tele_test)
+l_pred <- predict(loaded_laplace, tele_test)
+b_pred <- predict(loaded_bessel, tele_test)
+a_pred <- predict(loaded_anova, tele_test)
+s_pred <- predict(loaded_spline, tele_test)
+rbf_pred  <- predict(loaded_rbf, tele_test)
+
+
+#table(v_pred, tele_test$y)
+
+## NOT A BINARY PREDICTION, so don't use confusion matrix
+
+## this time, use confusion matrix because this is a binary prediction
+library(caret)
+confusionMatrix(as.factor(tanh_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(poly_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(v_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(l_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(b_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(a_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(s_pred), as.factor(tele_test$y), positive = "yes")
+confusionMatrix(as.factor(rbf_pred), as.factor(tele_test$y), positive = "yes")
+```
+
 Using SVM with RBF, we see:
 
 - success rate = 65.8%
@@ -739,8 +800,5 @@ We discovered that logistic regression gave us a comparable sensitivity to KNN. 
 Our fine-tuned logistic regression at a threshold of 0.18 sees: 
 - success rate = 40.3% 
 - cost per call = 1.25
-<<<<<<< HEAD
 - profit = 5439.79 
-=======
-- profit = 5439.79 
->>>>>>> 5edea77c6642021a5726406361269b52a9f13a93
+
