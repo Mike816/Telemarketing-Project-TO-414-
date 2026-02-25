@@ -274,7 +274,64 @@ Next, we deploy clustering, an unsupervised machine learning technique, to creat
 
 We will explore both of these approaches and their predicated outcomes in the following sections.
 
+## Clustering
 
+```{r}
+# my_data <- read.csv("tele.csv")
+
+my_data <- read.csv("tele.csv", stringsAsFactors = TRUE)
+# Add new flag of whether the customer was contacted
+#my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
+
+
+#removes = c("X", "duration") # duration is unknown when calling
+#to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
+
+my_data$X <- NULL
+my_data$duration <- NULL
+  
+  
+#my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
+
+str(my_data)
+summary(my_data)
+```
+
+```{r}
+outcome <- my_data$y
+
+outcome <- ifelse(my_data$y == "yes", 1, 0)
+
+#turning factors into numerical values
+my_data <- as.data.frame(model.matrix(~.-1, data = my_data))
+
+
+minmax <- function(x){
+  (x - min(x)) / (max(x) - min(x))
+}
+
+
+## KILLS NA VALUES
+int_minmax <- as.data.frame(lapply(my_data, minmax))
+
+set.seed(12345)
+c5 <- kmeans(int_minmax, 5)
+c5$size
+c5$centers
+
+
+## CALCULATING AVERAGE CHURN RATES FOR EACH CLUSTER
+
+my_data$cluster_assignments <- c5$cluster
+
+tapply(outcome, my_data$cluster_assignments, mean)
+
+# Calculate the mean yes rate per cluster
+yes_averages <- aggregate(outcome ~ my_data$cluster_assignments, FUN = mean)
+colnames(yes_averages) <- c("Cluster", "Yes Rate")
+yes_averages
+
+```
 
 # Results 
 
