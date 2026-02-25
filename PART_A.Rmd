@@ -18,10 +18,6 @@ str(my_data)
 # Add new flag of whether the customer was contacted
 #my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
 
-## ciao ciao
-# random line
-#test2 
-# test andrea
 removes = c("X", "duration") # duration is unknown when calling
 to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
 
@@ -45,8 +41,12 @@ testing = my_data[-train_rows, ]
 ### Logistic model creation
 
 ```{r}
-linear_model = glm(y ~ ., data = training, family = binomial)
-stepmodel = step(linear_model, direction = "backward", trace = 0)
+#linear_model = glm(y ~ ., data = training, family = binomial)
+#stepmodel = step(linear_model, direction = "backward", trace = 0)
+#saveRDS(stepmodel, "stepmodel.rds")
+
+stepmodel = readRDS("stepmodel.rds")
+summary(stepmodel)
 ```
 
 ### Make predictions
@@ -62,7 +62,6 @@ pred = factor(pred, levels = levels(testing$y))
 ```{r}
 library(caret)
 confusionMatrix(pred, testing$y, positive = "yes")
-#testing
 ```
 
 

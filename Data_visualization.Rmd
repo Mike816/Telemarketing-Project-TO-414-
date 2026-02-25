@@ -1,0 +1,152 @@
+---
+title: "Data Visualization"
+author: "MIKE"
+date: "2026-02-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Reading Data and Data Cleaning
+
+```{r}
+my_data = read.csv("tele.csv")
+str(my_data)
+
+# Add new flag of whether the customer was contacted
+my_data$was_contacted = ifelse(my_data$pdays == 999, 0, 1)
+
+removes = c("X", "duration", "pdays") # duration is unknown when calling
+to_be_factors = c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "day_of_week", "poutcome", "y")
+
+my_data[removes] = NULL
+my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
+
+
+summary(my_data)
+```
+
+### Data Visualization
+
+**Current profitability**
+```{r}
+reward_per_success = 10
+training_cost = 1000
+base_call_cost = 1
+
+rates = seq(0.05, 1, by = 0.05)
+
+calls_before_quit = 1000 + pmax(0, (rates - 0.11) * 10000)
+cost_per_call = base_call_cost + training_cost / calls_before_quit
+
+percent_profit = ((rates * reward_per_success - cost_per_call) / cost_per_call) * 100
+
+profit_df = data.frame(
+  success_rate = rates,
+  percent_profit = percent_profit
+)
+
+library(ggplot2)
+library(scales)
+
+ggplot(profit_df, aes(success_rate, percent_profit)) +
+  geom_line(linewidth = 1) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_x_continuous(labels = percent) +
+  scale_y_continuous(labels = function(x) paste0(x, "%")) +
+  labs(
+    title = "Percent Profit per Call vs Success Rate",
+    x = "Success Rate",
+    y = "Percent Profit per Call"
+  )
+```
+
+As shown in the figure above, the percent profitability per call increases approximately linearly with the success rate. Since the break even success rate is 20%, any call with more than a 20% chance of success will generate profit. Therefore, we should make any call if the customer has 20% or more probability to buy our product. 
+
+However, this is not the case with our firm currently. This is where our profitability current exists.
+```{r}
+actual_rate = mean(my_data$y == "yes")
+
+actual_calls = 1000 + pmax(0, (actual_rate - 0.11) * 10000)
+actual_cost_per_call = base_call_cost + training_cost / actual_calls
+
+actual_profit = ((actual_rate * reward_per_success - actual_cost_per_call) / actual_cost_per_call) * 100
+
+ggplot(profit_df, aes(success_rate, percent_profit)) +
+  geom_line(linewidth = 1) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_hline(yintercept = actual_profit, color = "red", linetype = "dotted", linewidth = 1.2) +
+  annotate("text",
+           x = 0.8,
+           y = actual_profit,
+           label = paste0("Actual profit = ", round(actual_profit, 1), "%"),
+           color = "red",
+           vjust = 1.5) +
+  scale_x_continuous(labels = percent) +
+  scale_y_continuous(labels = function(x) paste0(x, "%")) +
+  labs(
+    title = "Percent Profit per Call vs Success Rate",
+    x = "Success Rate",
+    y = "Percent Profit per Call"
+  )
+```
+
+Our calls have a 11% success rate, which equates to a -42.9% loss per call made. From a purely monetary perspective, with a success rate this low, the optimal course of action is to not make any calls at all until we can increase our success rate per call to at least 20%.
+
+We believe we can achieve this by clustering our customer base into several groups, and only focus on calling those with a >20% succuss rate. We can also make a prediction model to determine if a call meets the critieria before we make the call to maximize our profit. We will explore both of these approachs and their predicited outcomes in the following sections.
+
+For now, we seek to understand which of the factors influence a call's success rate the most in an attempt in increase our call success rates:
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(scales)
+library(tidyr)
+
+## We want to check whether there is a strong relationship between y and the other variables by looking at the correlation heatmap.To make this possible, we first recode y as a binary variable (0 for no, 1 for yes) and then include this binary version of y in the correlation matrix that we plot as a heatmap.
+
+my_data$y_bin = ifelse(my_data$y == "yes", 1, 0)
+
+num_vars = c("y_bin","age","campaign","previous", "emp.var.rate","cons.price.idx","cons.conf.idx","euribor3m","nr.employed")
+
+num_df = my_data %>% select(all_of(num_vars))
+corr = cor(num_df, use="pairwise.complete.obs")
+
+corr_long = as.data.frame(as.table(corr)) %>%
+  rename(var1 = Var1, var2 = Var2, r = Freq)
+
+ggplot(corr_long, aes(var1, var2, fill=r)) +
+  geom_tile() +
+  coord_equal() + #square grid
+  theme(axis.text.x = element_text(angle=45, hjust=1)) + #rotates the bottom labels to prevent overlap
+  labs(title="Correlation heatmap", x=NULL, y=NULL)
+```
+
+We can clearly see from the heatmap that there is no strong correlation between a call's success rate and the other numerical variables; at least, no relationship as a whole is large enough to be easily visible in the graph.
+
+Despite the groups as a whole not having sigificant correlation with success rate, there still exists sigificant factors within each attribute that influences it. One of the most sigificant relationship we have found is between age and call succuess rate:
+
+```{r}
+my_data %>%
+  mutate(age_group = cut(age, breaks = seq(20, 90, by = 5))) %>%
+  group_by(age_group) %>%
+  summarise(p_yes = mean(y_bin, na.rm = TRUE) * 100,
+            .groups = "drop") %>%
+  ggplot(aes(x = age_group, y = p_yes)) +
+  geom_col(fill = "steelblue", color = "white") +
+
+  # red 20% reference line
+  geom_hline(yintercept = 20, color = "red", linetype = "dashed", linewidth = 1) +
+
+  labs(title = "Percentage of 'yes' by age group",
+       x = "Age group", y = "Percentage of yes (%)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+As we can see, every group above the age of 60 has a more than **40%** call success rate. This makes them highly valuable customers for our calls. We should priotize calling these people before all other groups. The other age bracket of interest is from 20-25, with a call success rate just under the break-even threshold of 20%. We should also pay attention to this group as they have the highest *potential* to become profitable and be our future customers. 
+
+
