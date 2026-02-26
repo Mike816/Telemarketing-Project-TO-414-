@@ -757,7 +757,7 @@ success_rate_glm <- 762/(1039+762)
 retention_glm <- 1000+((success_rate_glm - baseline)*10000)
 whole_training_cost <- 1000
 
-training_cost_per_call <- whole_training_cost/retention_glm
+training_cost_per_call_regression <- whole_training_cost/retention_glm
 
 pricepercallfinal_regression <- 1+training_cost_per_call_regression
 profit_regression <- 10*762 - 1801*(1+training_cost_per_call_regression)
@@ -808,8 +808,8 @@ This predictive model reflects 414 Corp's current call center customer base. As 
 
 ## Wrap Up
 
-While implementation of this strategy is financially valid, we encourage supervisors to temporarily increase availability of open-door office hours, allowing employees to ask questions and submit feedback regarding the strategy. 
+While implementation of this strategy is financially valid, we invite supervisors to increase availability of open-door office hours during this time, allowing employees to ask questions and submit feedback regarding the strategy. We recognize that this strategy depends just as much on employee buy-in as financial robustness.  
 
-Additionally, we encourage implementing wellness events to combat the current atmosphere of the call center. As success rates improve, workers would likely develop more positive interpersonal relationships with each other, but we understand that results may not come immediately. Starting strong would give 414 Corp the best foundational for long-term success of this strategy. 
+Additionally, we encourage implementing wellness events to combat the current atmosphere of the call center. As success rates improve, workers would likely develop more positive interpersonal relationships with each other, but we understand that results may not come immediately. Starting strong would give 414 Corp the best foundation for long-term success of this strategy. 
 
 More resources focused on employee well-being could unlock greater opportunities for both business and employee longevity. We believe our recommendations based upon our models will greatly improve the performance of 414 Corp.
