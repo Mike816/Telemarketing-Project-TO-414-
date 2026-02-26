@@ -1,23 +1,35 @@
 ---
-title: "FinalReport"
+title: "TO 414 Telemarketing Report"
 output: 
   html_document:
     self-contained: true
+    theme: "united"
+    toc: true
+    toc_depth: 3 # includes up to third-level headings in the TOC
+    toc_float: true # makes the TOC float on the side of the page
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, cache = TRUE)
+```
 
 ## Team Members
 
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------+
 | ![Riccardo Ferrari](https://media.licdn.com/dms/image/v2/D5603AQFflEafFyd_7A/profile-displayphoto-crop_800_800/B56ZyG5l2gIAAI-/0/1771789778338?e=1773273600&v=beta&t=FdsOTImp8CNb_dXLdDQCNNXy_j8SyvSK0DxZqOiT7jI "Riccardo Ferrari") | ![Mike Ye](https://media.licdn.com/dms/image/v2/D5603AQG9mSSoNSuGYA/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1718691249838?e=1773878400&v=beta&t=2luSsNSs3Qjs0-bktoZLajVcQeoDmHPqxcX2cdPo9Z4 "Mike Ye") | ![Daniel Myung](https://drive.google.com/uc?export=view&id=1oX3kGp_eOsgvzug_oAhZMJBVH7htjpfW) | ![Steven Liu](https://media.licdn.com/dms/image/v2/D5603AQENrf52ejSqrw/profile-displayphoto-shrink_800_800/B56ZNpR_MXGsAk-/0/1732638143673?e=1773273600&v=beta&t=bZ6kbfHZRhqgfTI_Boqudv1-jZAX4SIyoGw_Qg6cgnc "Steven Liu") | ![Andrea Demelas](https://drive.google.com/uc?export=view&id=1sfs8yje5_bIvdE-VDuWeBrWkE1UmgzFm) |
-|---|---|---|---|---|
-| **[Riccardo Ferrari](https://www.linkedin.com/in/riccardo-ferrari-2929b722a/)**<br>Financial Analyst | **[Mike Ye](https://www.linkedin.com/in/mike-ye-460923270/)**<br>Team Lead | **[Daniel Myung]()**<br>Data Scientist | **[Steven Liu](https://www.linkedin.com/in/steven-liu-554652244/)**<br>Communication Specialist | **[Andrea Demelas](https://www.linkedin.com/in/andreademelas/)**<br>Business Analyst |
++======================================================================================================================================================================================================================================+==========================================================================================================================================================================================================================================+===============================================================================================+============================================================================================================================================================================================================================+=================================================================================================+
+| [**Riccardo Ferrari**](https://www.linkedin.com/in/riccardo-ferrari-2929b722a/)<br>Financial Analyst                                                                                                                                 | [**Mike Ye**](https://www.linkedin.com/in/mike-ye-460923270/)<br>Team Lead                                                                                                                                                               | [**Daniel Myung**]()<br>Data Scientist                                                        | [**Steven Liu**](https://www.linkedin.com/in/steven-liu-554652244/)<br>Communication Specialist                                                                                                                            | [**Andrea Demelas**](https://www.linkedin.com/in/andreademelas/)<br>Business Analyst            |
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------+
 
 # Executive Summary
-414 Company's call center currently faces several challenges. Call center associates frequently face abusive customers, which leads to extreme employee turnover. Many quit within days, driving high training costs of $1000 per associate. The call center utilizes a blanket strategy in regards to outreach, with standardized talking-points from HR. 
 
-We use data-forward methodologies to assess customer patterns, recommending a targeted approach to achieve beyond break-even profitability. Our approach utilizes supervised and unsupervised algorithmic learning models to calculate profitable target segments, comparing the results to blanket-calling. We demonstrate our work with each type of algorithm to propose the most profitable strategy.  
+414 Company's call center currently faces several challenges. Call center associates frequently face abusive customers, which leads to extreme employee turnover. Many quit within days, driving high training costs of \$1000 per associate. The call center utilizes a blanket strategy in regards to outreach, with standardized talking-points from HR.
+
+We use data-forward methodologies to assess customer patterns, recommending a targeted approach to achieve beyond break-even profitability. Our approach utilizes supervised and unsupervised algorithmic learning models to calculate profitable target segments, comparing the results to blanket-calling. We demonstrate our work with each type of algorithm to propose the most profitable strategy.
 
 # Background
-Telemarketing has evolved from reactive operations to data-driven hubs using analytics for efficiency and customer satisfaction. The industry has applied predictive learning techniques from computer science research to identify and recommend calls to high customer propensity profiles [Alternyx](https://www.alteryx.com/resources/use-case/call-center-analytics-predictive-modeling) recommend calls to "nearest" high-propensity profiles, reducing random dialing)). In the modern age, telemarketing has shifted away from mixed-results intuition into focused, customer-focused campaigns. 
+
+Telemarketing has evolved from reactive operations to data-driven hubs using analytics for efficiency and customer satisfaction. The industry has applied predictive learning techniques from computer science research to identify and recommend calls to high customer propensity profiles ([Alternyx](https://www.alteryx.com/resources/use-case/call-center-analytics-predictive-modeling)). In the modern age, telemarketing has shifted away from mixed-results intuition into focused, customer-focused campaigns.
 
 # Data Exploration
 
@@ -40,7 +52,8 @@ summary(my_data)
 ```
 
 **Current profitability**
-```{r}
+
+```{r, warning=FALSE}
 reward_per_success = 10
 training_cost = 1000
 base_call_cost = 1
@@ -75,16 +88,15 @@ ggplot(profit_df, aes(success_rate, percent_profit)) +
 
 We set out to find a profitability benchmark. For our profitability calculations, we assume the following as per the specifications:
 
-- Each call has a static cost of 1 dollar
-- Employees have a 1000 dollar training cost, with on average 1000 calls before quitting, increasing by 100 calls per 1% additional call success above the current 11% and vice versa.
-- The revenue from a successful call is 10 dollars
+-   Each call has a static cost of 1 dollar
+-   Employees have a 1000 dollar training cost, with on average 1000 calls before quitting, increasing by 100 calls per 1% additional call success above the current 11% and vice versa.
+-   The revenue from a successful call is 10 dollars
 
-
-As shown in the figure above, the percent profitability per call increases approximately linearly with the success rate. Since the break even success rate is 20%, any call with more than a 20% chance of success will generate profit. Therefore, we should make any call if the customer has 20% or more probability to buy our product. 
+As shown in the figure above, the percent profitability per call increases approximately linearly with the success rate. Since the break even success rate is 20%, any call with more than a 20% chance of success will generate profit. Therefore, we should make any call if the customer has 20% or more probability to buy our product.
 
 However, this is not the case with our firm currently. This is where our profitability currently stands:
 
-```{r}
+```{r, warning=FALSE}
 actual_rate = mean(my_data$y == "yes")
 
 actual_calls = 1000 + pmax(0, (actual_rate - 0.11) * 10000)
@@ -114,7 +126,7 @@ ggplot(profit_df, aes(success_rate, percent_profit)) +
 
 Our calls have a 11% success rate, which equates to a -42.9% loss per call made. From a purely monetary perspective, with a success rate this low, the optimal course of action is to not make any calls at all until we can increase our success rate per call to at least 20%.
 
-We believe we can achieve this by clustering our customer base into several groups, and only focus on calling those with a >20% succuss rate. We can also make a prediction model to determine if a call meets the critieria before we make the call to maximize our profit. We will explore both of these approachs and their predicted outcomes in the following sections.
+We believe we can achieve this by clustering our customer base into several groups, and only focus on calling those with a \>20% succuss rate. We can also make a prediction model to determine if a call meets the critieria before we make the call to maximize our profit. We will explore both of these approachs and their predicted outcomes in the following sections.
 
 For now, we seek to understand which of the factors influence a call's success rate the most in an attempt in increase our call success rates:
 
@@ -143,7 +155,7 @@ ggplot(corr_long, aes(var1, var2, fill=r)) +
   labs(title="Correlation heatmap", x=NULL, y=NULL)
 ```
 
-We see from the heatmap weak correlation between a call's success rate and the other numerical variables. No relationship as a whole is large enough to be easily visible in the graph. 
+We see from the heatmap weak correlation between a call's success rate and the other numerical variables. No relationship as a whole is large enough to be easily visible in the graph.
 
 Despite the groups as a whole not having significant correlation with success rate, there still exists significant factors within each attribute that influences it. One of the most significant relationship we have found is between age and call success rate:
 
@@ -213,13 +225,13 @@ analyze_binary_by_group(
                  length.out = 10))
 ```
 
-We have calculated a 95% confidence interval for the true value of each subgroup of the age data as indicated by the black bars on the graph. A confidence interval above the red break-even line indicates that the subgroup is profitable to call. 
+We have calculated a 95% confidence interval for the true value of each subgroup of the age data as indicated by the black bars on the graph. A confidence interval above the red break-even line indicates that the subgroup is profitable to call.
 
 ## Key Attributes
 
-We see that **older customers** (>62) has over 40% call success rate. This makes them highly valuable customers we should prioritize. The other age bracket of interest is from 17-26, with a call success rate confidence interval including the break-even threshold of 20%. We should closely monitor this group to assess future potential of conversion into profitable customers. 
+We see that **older customers** (\>62) has over 40% call success rate. This makes them highly valuable customers we should prioritize. The other age bracket of interest is from 17-26, with a call success rate confidence interval including the break-even threshold of 20%. We should closely monitor this group to assess future potential of conversion into profitable customers.
 
-```{r}
+```{r, warning=FALSE}
 v="previous"
 analyze_binary_by_group(
     data   = my_data,
@@ -232,8 +244,7 @@ analyze_binary_by_group(
 
 **Repeated previous contact** also seems to be a significant contributor to the success rate. There seem to be a high correlation between multiple previous calls and success rate. This does not support repeatably calling the same unenthusiastic customers; rather, we should divert resources to target repeat customers or enthusatic customers.
 
-
-```{r}
+```{r, warning=FALSE}
 good_num_vars = c("euribor3m")
 
 for (v in good_num_vars) {
@@ -249,11 +260,11 @@ for (v in good_num_vars) {
                    
 ```
 
-Another interesting find was the correlation between **interests rates** and our call success rate. It seems lower interests rates (<3%) dramatically increase our call success rate while high interest rates (>3.57%) lowers them to the point of unsuitability. This suggests we increase call output during times of lower interest rates.
+Another interesting find was the correlation between **interests rates** and our call success rate. It seems lower interests rates (\<3%) dramatically increase our call success rate while high interest rates (\>3.57%) lowers them to the point of unsuitability. This suggests we increase call output during times of lower interest rates.
 
 ## Clustering
 
-Next, we deploy clustering, an unsupervised machine learning technique, to create nuanced customer segments within the 414 Company's telemarketing dataset to achieve profitability. Specifically, we use the K-means algorithm, which partitions data-point observations into groups through an iterative approach. In short, K-means allows us identify segments of customers, resulting in nuanced customer personas to target. 
+Next, we deploy clustering, an unsupervised machine learning technique, to create nuanced customer segments within the 414 Company's telemarketing dataset to achieve profitability. Specifically, we use the K-means algorithm, which partitions data-point observations into groups through an iterative approach. In short, K-means allows us identify segments of customers, resulting in nuanced customer personas to target.
 
 ```{r}
 # my_data <- read.csv("tele.csv")
@@ -316,47 +327,50 @@ Using the K-means algorithm with a set seed, we found that cluster 2 had the hig
 
 Using the K-means algorithm, we found that cluster 2 had the highest call-propensity of customers (24.6% success rate). The main attributes of the cluster were
 
-- low employment at low employment rate volatility
-- low Euribor 3-month rate.
+-   low employment at low employment rate volatility
+-   low Euribor 3-month rate.
 
-We believe this suggests calls from cluster 2 originated from a time period of lowered interests rates, when less people had jobs, and when employment was uncertain. It seems reasonable that during uncertain economic periods, that people would be receptive to investment opportunities such as term deposits. 
+We believe this suggests calls from cluster 2 originated from a time period of lowered interests rates, when less people had jobs, and when employment was uncertain. It seems reasonable that during uncertain economic periods, that people would be receptive to investment opportunities such as term deposits.
 
-# Results 
+# Results
 
-We proceed to build supervised learning models with respect to predicting "y", or the propensity of customer profiles. 
+We proceed to build supervised learning models with respect to predicting "y", or the propensity of customer profiles.
 
-We found the data to require additional cleaning. For instance, we removed column “X” since it had no predictive meaning. We also removed "duration" and "pdays" to ensure a robust predictive approach, without the model being influenced by information it will not know. 
+We found the data to require additional cleaning. For instance, we removed column “X” since it had no predictive meaning. We also removed "duration" and "pdays" to ensure a robust predictive approach, without the model being influenced by information it will not know.
 
 Additionally, we also factorized all other variables, such as "job", "marital", "education", into categorical variables to facilitate fair comparisons. The data set was first split into training and testing subsets using a 70/30 split with a fixed seed to ensure reproducibility.
 
-
 ## Modeling
 
-Our approach first centered on prioritizing sensitivity, an attribute of models that minimizes false positives, which decreases the amount of non-responsive customers contacted by 414 Corp. 
+Our approach first centered on prioritizing sensitivity, an attribute of models that minimizes false positives, which decreases the amount of non-responsive customers contacted by 414 Corp.
 
 To benchmark a model's financial performance relies firstly on calculating the success rate, that is:
-```
+
+```         
 
 Success Rate = True Positive / (True Positive + False Positive)
 ```
 
 Then, using the success rate to quantify cost per call:
-```
+
+```         
 Training cost = 1000 / (1000 + (success_rate - baseline_success_rate) * 10000)
 cost_per_call = Training Cost + 1
 ```
 
-And finally calculating the profit: 
+And finally calculating the profit:
 
-```
+```         
 Profit = ($10 * True Positive) - (cost_per_call * (True Positive + False Positive))
 ```
-We will use this framework with all models going forward. 
+
+We will use this framework with all models going forward.
 
 ### Best: K Nearest Neighbor (KNN) without clustering
-K Nearest Neighbor (KNN) is an algorithm that classifies new customers by finding the K most similar historical customers and predicting based on their majority outcome (buy/no-buy). In short, it creates a "customer similarity map" of where our best customers are located. 
 
-We discovered that KNN gave us the highest profit, though not having the highest sensitivity. We hypothesize that other models, while having higher sensitivities, did not produce a sufficient amount of true positives, leading to lower profit.  
+K Nearest Neighbor (KNN) is an algorithm that classifies new customers by finding the K most similar historical customers and predicting based on their majority outcome (buy/no-buy). In short, it creates a "customer similarity map" of where our best customers are located.
+
+We discovered that KNN gave us the highest profit, though not having the highest sensitivity. We hypothesize that other models, while having higher sensitivities, did not produce a sufficient amount of true positives, leading to lower profit.
 
 ```{r}
 tele <- read.csv("tele.csv", stringsAsFactors = TRUE)
@@ -375,7 +389,6 @@ tele$telepcalled <-ifelse(tele$pdays == 999, 0,1)
 str(tele)
 summary(tele)
 ```
-
 
 ```{r}
 
@@ -432,11 +445,12 @@ library(caret)
 
 confusionMatrix(as.factor(tele_pred), as.factor(tele_test$y), positive = "1")
 ```
-We chose to use k=18, because it was a relatively high k value that still gave us good sensitivity. 
+
+We chose to use k=18, because it was a relatively high k value that still gave us good sensitivity.
 
 ```{r}
 
-successrate <- sum(tele_test[, ncol(tele_test) - 1]) / nrow(tele_test)
+successrate_KNN <- sum(tele_test[, ncol(tele_test) - 1]) / nrow(tele_test)
 
 FN <- 633
 TN <- 10963
@@ -463,17 +477,17 @@ profit_KNN <- (10 * TP) - (pricepercallfinal_KNN * (TP + FP))
 ## 1000 + (successrate - .11) * 10000 / 1000
 ```
 
-Assuming that everyone in our model is responsive, we see: 
+Assuming that everyone in our model is responsive, we see:
 
 ```{r}
 cat("Success Rate: ", round(newsuccessrate_KNN,2), "\n")
-cat("Cost per Call: $", round(pricepercallfina_KNN,2), "\n")
+cat("Cost per Call: $", round(pricepercallfinal_KNN,2), "\n")
 cat("Profit: $", round(profit_KNN,2))
 ```
 
 ### KNN with clusters
 
-We also trained KNN based on clusters from Data Exploration section as well. In this approach, we only made predictions about customers who were in the highest propensity cluster. However, this strategy did not perform as well as KNN on its own. 
+We also trained KNN based on clusters from Data Exploration section as well. In this approach, we only made predictions about customers who were in the highest propensity cluster. However, this strategy did not perform as well as KNN on its own.
 
 ```{r}
 
@@ -573,7 +587,7 @@ profitKNNCLUSTER <- (10 * TP) - (pricepercallKNNCLUSTER * (TP + FP))
 
 ```
 
-Using this method, we identify that four clusters at our constant of 18 neighbors was the most profitable: 
+Using this method, we identify that four clusters at our constant of 18 neighbors was the most profitable:
 
 ```{r}
 # Results Output
@@ -582,14 +596,13 @@ cat("Cost Per Call: $", round(pricepercallKNNCLUSTER, 2), "\n")
 cat("Total Profit: $", round(profitKNNCLUSTER, 2), "\n")
 ```
 
-Profit appears inversely correlated with the number of clusters as well. As more clusters appear, profits decrease, with an unusual increase and subsequent plateau after eight clusters. We hypothesize that larger clusters may contain a mix of high-propensity and low-propensity customers, and after a certain number of clusters, the algorithm identifies a mostly profitable segment. 
+Profit appears inversely correlated with the number of clusters as well. As more clusters appear, profits decrease, with an unusual increase and subsequent plateau after eight clusters. We hypothesize that larger clusters may contain a mix of high-propensity and low-propensity customers, and after a certain number of clusters, the algorithm identifies a mostly profitable segment.
 
 ### SVM with RBF
 
-Support Vector Machine (SVM) is a supervised algorithm that constructs a maximum-margin plane that separates categories, drawn using linear (vanilla), polynomial (poly), or 3D lines (RBF). In short, SVM finds the best dividing line between customers who buy term deposits and those who don't, making future predictions are more accurate. 
+Support Vector Machine (SVM) is a supervised algorithm that constructs a maximum-margin plane that separates categories, drawn using linear (vanilla), polynomial (poly), or 3D lines (RBF). In short, SVM finds the best dividing line between customers who buy term deposits and those who don't, making future predictions are more accurate.
 
-We discovered that SVM using RBF gave us the highest sensitivity amongst the SVM variants. We hypothesize that other variants such as linear (vanilla) were not able to capture the nuances of the data or were not suitable for the specific dataset. 
-
+We discovered that SVM using RBF gave us the highest sensitivity amongst the SVM variants. We hypothesize that other variants such as linear (vanilla) were not able to capture the nuances of the data or were not suitable for the specific dataset.
 
 ```{r}
 # my_data <- read.csv("tele.csv")
@@ -673,7 +686,7 @@ library(caret)
 #confusionMatrix(as.factor(s_pred), as.factor(tele_test$y), positive = "yes")
 confusionMatrix(as.factor(rbf_pred), as.factor(tele_test$y), positive = "yes")
 ```
-       
+
 ```{r}
 FN <- 1056
 TN <- 10815
@@ -707,9 +720,9 @@ cat("Profit: $", round(profit_SVM,2))
 
 ### Logistic Regression
 
-Logistic regression models the probability of binary outcomes using the logistic (sigmoid) function, incorporating customer characteristics such as age, job type, and loan status to identify how likely each customer will be responsive. We used a backward stepwise selection to retain only statistically useful predictors. 
+Logistic regression models the probability of binary outcomes using the logistic (sigmoid) function, incorporating customer characteristics such as age, job type, and loan status to identify how likely each customer will be responsive. We used a backward stepwise selection to retain only statistically useful predictors.
 
-We discovered that logistic regression gave us a comparable sensitivity to KNN. Additionally, logistic regression gave us the second most profitable, only behind KNN. We hypothesize that logistic regression may be more precise, giving us fewer but highly responsive customers. This leads to high cost per call in additional to higher margin compared to KNN. 
+We discovered that logistic regression gave us a comparable sensitivity to KNN. Additionally, logistic regression gave us the second most profitable, only behind KNN. We hypothesize that logistic regression may be more precise, giving us fewer but highly responsive customers. This leads to high cost per call in additional to higher margin compared to KNN.
 
 ```{r}
 my_data = read.csv("tele.csv")
@@ -773,39 +786,38 @@ cat("Total Profit:", "$", profit_regression)
 
 ```
 
-
 # Conclusion
 
 ## Targeting Propensity
 
-After running multiple models, we determine the best model to be KNN, with logistic regression coming in second. Compared to the status quo of: 
+After running multiple models, we determine the best model to be KNN, with logistic regression coming in second. Compared to the status quo of:
 
-- 11% success rate 
-- loss of $35,976
+-   11% success rate
+-   loss of \$35,976
 
 our strategy results in:
 
-- over 86% increase in success rate
-- over $6,500 in profit. 
+-   over 86% increase in success rate
+-   over \$6,500 in profit.
 
-This is a significant improvement over the baseline profit by nearly 40,000 as well as a 39% improvement in call success rate. 414 Corp makes significantly less calls at a higher success rate and profit margin.
+This is a significant improvement over the baseline profit by nearly 40,000. 414 Corp makes significantly less calls at a higher success rate and profit margin.
 
 To quantify the "perfect" customer by analyzing the intersections of all characteristics would require intensive computing resources. In lieu of this, we recommend three general characteristics of responsive customers:
 
-- Older in age
-- Repeated previous contact
-- Lower interests rates (<3%)
+-   Older in age
+-   Repeated previous contact
+-   Lower interests rates (\<3%)
 
-We encourage 414 Corp to proactively apply these insights to tailor scripts for customers. Being able to anticipate needs allows for personalization of service. Shoe retailer Zappos provides a case study, showing that personalized service using customer history could increase sales 20%+ [HelpSquad](https://helpsquad.com/blog/what-we-learned-zappos-customer-support/). 
+We encourage 414 Corp to proactively apply these insights to tailor scripts for customers. Being able to anticipate needs allows for personalization of service. Shoe retailer Zappos provides a case study, showing that personalized service using customer history could increase sales 20%+ [HelpSquad](https://helpsquad.com/blog/what-we-learned-zappos-customer-support/).
 
 ## Maintaining Model Value Over Time
 
-This predictive model reflects 414 Corp's current call center customer base. As 414 Corp targets high-propensity customers, nuanced characteristic dynamics will emerge and affect the accurateness of the model. To prevent model decay, 414 Corp should retrain the model annually using fresh data and monitor key performance metrics like responsiveness. 
+This predictive model reflects 414 Corp's current call center customer base. As 414 Corp targets high-propensity customers, nuanced characteristic dynamics will emerge and affect the accurateness of the model. To prevent model decay, 414 Corp should retrain the model annually using fresh data and monitor key performance metrics like responsiveness.
 
 ## Wrap Up
 
-While implementation of this strategy is financially valid, we invite supervisors to increase availability of open-door office hours during this time, allowing employees to ask questions and submit feedback regarding the strategy. We recognize that this strategy depends just as much on employee buy-in as financial robustness.  
+While implementation of this strategy is financially valid, we invite supervisors to increase availability of open-door office hours during this time, allowing employees to ask questions and submit feedback regarding the strategy. We recognize that this strategy depends just as much on employee buy-in as financial robustness.
 
-Additionally, we encourage implementing wellness events to combat the current atmosphere of the call center. As success rates improve, workers would likely develop more positive interpersonal relationships with each other, but we understand that results may not come immediately. Starting strong would give 414 Corp the best foundation for long-term success of this strategy. 
+Additionally, we encourage implementing wellness events to combat the current atmosphere of the call center. As success rates improve, workers would likely develop more positive interpersonal relationships with each other, but we understand that results may not come immediately. Starting strong would give 414 Corp the best foundation for long-term success of this strategy.
 
 More resources focused on employee well-being could unlock greater opportunities for both business and employee longevity. We believe our recommendations based upon our models will greatly improve the performance of 414 Corp.
