@@ -1,0 +1,9 @@
+ggplot2
+scales
+dplyr
+tidyr
+janitor
+class
+lattice
+caret
+kernlab
