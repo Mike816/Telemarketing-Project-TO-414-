@@ -312,6 +312,7 @@ yes_averages
 
 ```
 
+<<<<<<< HEAD
 Using the K-means algorithm, we found that cluster 2 had the highest call-propensity of customers (24.6% success rate). The main things that stood out were that constant, low employment, low Euribor 3-month rate, and the employment variation rate was much lower than all the other clusters. We believe this suggests that a lot of the calls from cluster 2 came from when interests rates were lower, when less people had jobs, and when employment was more uncertain. We believe this makes sense because it seems reasonable that during uncertain economic periods, that people would go for a safer option.
 
 Using the K-means algorithm, we found that cluster 2 had the highest call-propensity of customers (24.6% success rate). The main attributes of the cluster were
@@ -320,6 +321,9 @@ Using the K-means algorithm, we found that cluster 2 had the highest call-propen
 - low Euribor 3-month rate.
 
 We believe this suggests calls from cluster 2 originated from a time period of lowered interests rates, when less people had jobs, and when employment was uncertain. It seems reasonable that during uncertain economic periods, that people would be receptive to investment opportunities such as term deposits. 
+=======
+We used the K-means algorithm with 4 clusters, and set a seed to make sure the results were repeatable (because K-means starts with random centers). We found that cluster 2 had the highest rate of customers saying yes. The rate was roughly 24.6%, and was the only rate above the 20% break even threshold. Looking into what kinds of people are in cluster 2, the main things that stood out were that the number of employees was lower, the euribor 3 month rate was much lower, and the employment variation rate was much lower than all the other clusters. We believe this suggests that a lot of the calls from cluster 2 came from when interests rates were lower, when less people had jobs, and when employment was more uncertain. We believe this makes sense because it seems reasonable that during uncertain economic periods, that people would go for a safer option. 
+>>>>>>> d9c061f4ca43a163e4bb478c4f115c5cf0e4909d
 
 # Results 
 
@@ -764,6 +768,7 @@ profit_regression <- 10*762 - 1801*(1+training_cost_per_call_regression)
 
 ```
 
+<<<<<<< HEAD
 Our fine-tuned logistic regression at a threshold of 0.18 sees: 
 
 ```{r}
@@ -772,8 +777,16 @@ cat("Total Cost:", "$", pricepercallfinal_regression)
 cat("Total Profit:", "$", profit_regression)
 
 ```
+=======
+The data set was first split into training and testing subsets using a 70/30 split with a fixed seed to ensure reproducibility. A logistic regression model predicting the call success rate was trained on the training data, and backward stepwise selection was applied to retain only statistically useful predictors. 
+>>>>>>> d9c061f4ca43a163e4bb478c4f115c5cf0e4909d
 
+The model performance was evaluated with a confusion matrix. Using the given data, including the training cost per call, static cost per call, and the true results of the testing data, we were able to calculate the projected profits at each threshold for the model. Iterating through this process led us to an optimal classification threshold of 0.18, with the following results:
+- call success rate = 40.3% 
+- total cost per call = 1.25
+- profit = 5439.79
 
+<<<<<<< HEAD
 # Conclusion
 
 ## Targeting Propensity
@@ -805,3 +818,6 @@ While implementation of this strategy is financially valid, we encourage supervi
 Additionally, we encourage implementing wellness events to combat the current atmosphere of the call center. As success rates improve, workers would likely develop more positive interpersonal relationships with each other, but we understand that results may not come immediately. Starting strong would give 414 Corp the best foundational for long-term success of this strategy. 
 
 More resources focused on employee well-being could unlock greater opportunities for both business and employee longevity. We believe our recommendations based upon our models will greatly improve the performance of 414 Corp.
+=======
+This is a significant improvement over the baseline profit by nearly 40,000 as well as a 39% improvement in call success rate. With this strategy, we make significantly less calls, but have a much higher success rate and profit margin. Although this approach is not as profitable compared to our clustering model, it still remains a useful model.
+>>>>>>> d9c061f4ca43a163e4bb478c4f115c5cf0e4909d
