@@ -14,30 +14,14 @@ output:
 # Executive Summary
 414 Company's call center currently faces several challenges. Call center associates frequently face abusive customers, which leads to extreme employee turnover. Many quit within days, driving high training costs of $1000 per associate. The call center utilizes a blanket strategy in regards to outreach, with standardized talking-points from HR. 
 
-We use data-forward methodologies to assess customer patterns, recommending a targeted approach to achieve beyond break-even profitability. Our approach utilizes supervised and unsupervised algorithmic learning models to calculate profitable target segments, comparing the results to blanket-calling (10% success). We demonstrate our work with each type of algorithm to propose the most profitable strategy.  
+We use data-forward methodologies to assess customer patterns, recommending a targeted approach to achieve beyond break-even profitability. Our approach utilizes supervised and unsupervised algorithmic learning models to calculate profitable target segments, comparing the results to blanket-calling. We demonstrate our work with each type of algorithm to propose the most profitable strategy.  
 
 # Background
-Telemarketing has evolved from reactive operations to data-driven hubs using analytics for efficiency and customer satisfaction. The industry has applied predictive learning techniques from computer science research to identify and recommend calls to high customer propensity profiles ([Alternyx](recommend calls to "nearest" high-propensity profiles, reducing random dialing)). In the modern age, telemarketing has shifted away from mixed-results intuition into focused, customer-focused campaigns. 
+Telemarketing has evolved from reactive operations to data-driven hubs using analytics for efficiency and customer satisfaction. The industry has applied predictive learning techniques from computer science research to identify and recommend calls to high customer propensity profiles [Alternyx](https://www.alteryx.com/resources/use-case/call-center-analytics-predictive-modeling) recommend calls to "nearest" high-propensity profiles, reducing random dialing)). In the modern age, telemarketing has shifted away from mixed-results intuition into focused, customer-focused campaigns. 
 
 # Data Exploration
 
-- mike data exploration
-	- some metrics 
-- clustering 
-	- showcase clustering graphs
-
-
-We began by taking a deep dive into our data. First, we observe that some metrics regarding our calls:
-
-- 11% success rate
-- -42.9% loss per call made. 
-
-From a purely monetary perspective, with a success rate this low, the optimal course of action is to not make any calls at all until we can increase our success rate per call to at least 20%.
-
-```
-code for that line graph with red line
-```
-### Reading Data and Data Cleaning
+We began by taking a deep dive into our data.
 
 ```{r}
 my_data = read.csv("tele.csv")
@@ -54,13 +38,6 @@ my_data[to_be_factors] = lapply(my_data[to_be_factors], factor)
 
 summary(my_data)
 ```
-We proceed to build supervised learning models with respect to predicting "y", or the propensity of customer profiles. 
-
-We first found the data to require additional cleaning. For instance, we removed column “X” since it had no predictive meaning. We also removed "duration" to ensure a robust predictive approach, without the model being influenced by information it will not know. 
-
-Additionally, we also factorized all other variables, such as "job", "marital", "education", into categorical variables to facilitate fair comparisons. We prepared the data-set for model training by reserving a portion of the data for training and another for verification. We verify consistency between the training and testing data by comparing their means.
-
-### Data Visualization
 
 **Current profitability**
 ```{r}
@@ -96,7 +73,8 @@ ggplot(profit_df, aes(success_rate, percent_profit)) +
   )
 ```
 
-For our profitability calculations, we assume the following as per the specifications:
+We set out to find a profitability benchmark. For our profitability calculations, we assume the following as per the specifications:
+
 - Each call has a static cost of 1 dollar
 - Employees have a 1000 dollar training cost, with on average 1000 calls before quitting, increasing by 100 calls per 1% additional call success above the current 11% and vice versa.
 - The revenue from a successful call is 10 dollars
@@ -105,6 +83,7 @@ For our profitability calculations, we assume the following as per the specifica
 As shown in the figure above, the percent profitability per call increases approximately linearly with the success rate. Since the break even success rate is 20%, any call with more than a 20% chance of success will generate profit. Therefore, we should make any call if the customer has 20% or more probability to buy our product. 
 
 However, this is not the case with our firm currently. This is where our profitability currently stands:
+
 ```{r}
 actual_rate = mean(my_data$y == "yes")
 
@@ -164,9 +143,9 @@ ggplot(corr_long, aes(var1, var2, fill=r)) +
   labs(title="Correlation heatmap", x=NULL, y=NULL)
 ```
 
-We can clearly see from the heatmap that there is no strong correlation between a call's success rate and the other numerical variables; at least, no relationship as a whole is large enough to be easily visible in the graph. 
+We see from the heatmap weak correlation between a call's success rate and the other numerical variables. No relationship as a whole is large enough to be easily visible in the graph. 
 
-Despite the groups as a whole not having significant correlation with success rate, there still exists sigificant factors within each attribute that influences it. One of the most significant relationship we have found is between age and call succuess rate:
+Despite the groups as a whole not having significant correlation with success rate, there still exists significant factors within each attribute that influences it. One of the most significant relationship we have found is between age and call success rate:
 
 ```{r}
 analyze_binary_by_group <- function(data, var, target,
@@ -233,9 +212,12 @@ analyze_binary_by_group(
                  max(my_data[[v]], na.rm = TRUE),
                  length.out = 10))
 ```
+
 We have calculated a 95% confidence interval for the true value of each subgroup of the age data as indicated by the black bars on the graph. A confidence interval above the red break-even line indicates that the subgroup is profitable to call. 
 
-As we can see, every group above the age of 62 has a more than **40%** call success rate. This makes them highly valuable customers for our calls. We should priotize calling these people before all other groups. The other age bracket of interest is from 17-26, with a call success rate confidence interval including the  break-even threshold of 20%. We should also pay attention to this group as they have the highest *potential* to become profitable and be our future customers. 
+## Key Attributes
+
+We see that **older customers** (>62) has over 40% call success rate. This makes them highly valuable customers we should prioritize. The other age bracket of interest is from 17-26, with a call success rate confidence interval including the break-even threshold of 20%. We should closely monitor this group to assess future potential of conversion into profitable customers. 
 
 ```{r}
 v="previous"
@@ -248,7 +230,7 @@ analyze_binary_by_group(
                  length.out = 8))
 ```
 
-Repeated previous contact also seems to be a significant contributor to the success rate. There seem to be a high correlation between multiple previous calls and success rate. This doesn't necessarily indicate that we should repeatably call the same unenthusiastic customer but rather use more resources on calling repeat customers or those who seem to be amenable to our product. 
+**Repeated previous contact** also seems to be a significant contributor to the success rate. There seem to be a high correlation between multiple previous calls and success rate. This does not support repeatably calling the same unenthusiastic customers; rather, we should divert resources to target repeat customers or enthusatic customers.
 
 
 ```{r}
@@ -267,14 +249,11 @@ for (v in good_num_vars) {
                    
 ```
 
-Another interesting find was the correlation between interests rates and our call success rate. It seems lower interests rates (<3%) dramatically increase our call success rate while high interest rates (>3.57) lowers them to the point of unsuitability. This would suggest that we should increase our call output during times with lower interest rates, and vice versa.
-
-Next, we deploy clustering, an unsupervised machine learning technique, to create nuanced customer segments within the 414 Company's telemarketing dataset to achieve profitability. Our focus is on calling those segments with a >20% succuss rate. We can also make a prediction model to determine if a call meets the criteria before we make the call to maximize our profit. 
-
-
-We will explore both of these approaches and their predicated outcomes in the following sections.
+Another interesting find was the correlation between **interests rates** and our call success rate. It seems lower interests rates (<3%) dramatically increase our call success rate while high interest rates (>3.57%) lowers them to the point of unsuitability. This suggests we increase call output during times of lower interest rates.
 
 ## Clustering
+
+Next, we deploy clustering, an unsupervised machine learning technique, to create nuanced customer segments within the 414 Company's telemarketing dataset to achieve profitability. Specifically, we use the K-means algorithm, which partitions data-point observations into groups through an iterative approach. In short, K-means allows us identify segments of customers, resulting in nuanced customer personas to target. 
 
 ```{r}
 # my_data <- read.csv("tele.csv")
@@ -333,20 +312,27 @@ yes_averages
 
 ```
 
-Using the K-means algorithm, we found that cluster 2 had the highest rate of customers saying yes. The rate was roughly 24.6%, and was the only rate above the 20% break even threshold. Looking into what kinds of people are in cluster 2, the main things that stood out were that the number of employees was lower, the euribor 3 month rate was much lower, and the employment variation rate was much lower than all the other clusters. We believe this suggests that a lot of the calls from cluster 2 came from when interests rates were lower, when less people had jobs, and when employment was more uncertain. We believe this makes sense because it seems reasonable that during uncertain economic periods, that people would go for a safer option. 
+Using the K-means algorithm, we found that cluster 2 had the highest call-propensity of customers (24.6% success rate). The main things that stood out were that constant, low employment, low Euribor 3-month rate, and the employment variation rate was much lower than all the other clusters. We believe this suggests that a lot of the calls from cluster 2 came from when interests rates were lower, when less people had jobs, and when employment was more uncertain. We believe this makes sense because it seems reasonable that during uncertain economic periods, that people would go for a safer option.
+
+Using the K-means algorithm, we found that cluster 2 had the highest call-propensity of customers (24.6% success rate). The main attributes of the cluster were
+
+- low employment at low employment rate volatility
+- low Euribor 3-month rate.
+
+We believe this suggests calls from cluster 2 originated from a time period of lowered interests rates, when less people had jobs, and when employment was uncertain. It seems reasonable that during uncertain economic periods, that people would be receptive to investment opportunities such as term deposits. 
 
 # Results 
 
-## Data Cleaning
 We proceed to build supervised learning models with respect to predicting "y", or the propensity of customer profiles. 
 
-We first found the data to require additional cleaning. For instance, we removed column “X” since it had no predictive meaning. We also removed "duration" and "pdays" to ensure a robust predictive approach, without the model being influenced by information it will not know. 
+We found the data to require additional cleaning. For instance, we removed column “X” since it had no predictive meaning. We also removed "duration" and "pdays" to ensure a robust predictive approach, without the model being influenced by information it will not know. 
 
-Additionally, we also factorized all other variables, such as "job", "marital", "education", into categorical variables to facilitate fair comparisons. We prepared the data-set for model training by reserving a portion of the data for training and another for verification. We verify consistency between the training and testing data by comparing their means.
+Additionally, we also factorized all other variables, such as "job", "marital", "education", into categorical variables to facilitate fair comparisons. We prepared the data-set for model training by reserving a portion of the data for training and another for verification. 
 
 
 ## Modeling
-Our approach first centered on prioritizing sensitivity, an attribute of models that minimizes false positives, which decreases the amount of non-responsive customers contacted by 414 Company. Amongst the different approaches, we discovered that KNN gave us the highest profit, though not having the highest sensitivity. 
+
+Our approach first centered on prioritizing sensitivity, an attribute of models that minimizes false positives, which decreases the amount of non-responsive customers contacted by 414 Corp. 
 
 To benchmark a model's financial performance relies firstly on calculating the success rate, that is:
 ```
@@ -366,15 +352,12 @@ And finally calculating the profit:
 Profit = ($10 * True Positive) - (cost_per_call * (True Positive + False Positive))
 ```
 We will use this framework with all models going forward. 
-### Best: K Nearest Neighbor (KNN) (without clustering)
-knn in danielsbranch
 
-
+### Best: K Nearest Neighbor (KNN) without clustering
 K Nearest Neighbor (KNN) is an algorithm that classifies new customers by finding the K most similar historical customers and predicting based on their majority outcome (buy/no-buy). In short, it creates a "customer similarity map" of where our best customers are located. 
 
 We discovered that KNN gave us the highest profit, though not having the highest sensitivity. We hypothesize that other models, while having higher sensitivities, did not produce a sufficient amount of true positives, leading to lower profit.  
 
-Code
 ```{r}
 tele <- read.csv("tele.csv", stringsAsFactors = TRUE)
 
@@ -411,13 +394,6 @@ minmax <- function(x){
 #normalized data
 tele_n <- as.data.frame(lapply(tele_d, minmax))
 
-summary(tele_n)
-```
-
-
-### Step 3: Split Data
-
-```{r}
 set.seed(12345)
 ratio <- 0.7
 
@@ -451,8 +427,6 @@ tele_pred <- knn(train = tele_train[,(-ncol(tele_train)-1)],
 
 ```
 
-### Step 6: Evaluate your prediction
-
 ```{r}
 library(caret)
 
@@ -461,12 +435,8 @@ confusionMatrix(as.factor(tele_pred), as.factor(tele_test$y), positive = "1")
 We chose to use k=18, because it was a relatively high k value that still gave us good sensitivity. 
 
 ```{r}
-## $10 * TP - 2 *(FP + TP) = profit
-# 10 = contribution margin
-# 2 = cost per made per call
 
 successrate <- sum(tele_test[, ncol(tele_test) - 1]) / nrow(tele_test)
-successrate
 
 FN <- 633
 TN <- 10963
@@ -477,50 +447,34 @@ FP <- 18
 profitnothing <- (10 * (FN + TP)) - (2 * (TN + TP + FN + FP))
 
 newsuccessrate <- TP / (TP + FP)
-newsuccessrate
 
 diff <- newsuccessrate - successrate
-diff
 
 newrrate <- diff * 10000 
-newrrate
+
 
 pricepercall <- 1000 / (newrrate + 1000)
-pricepercall <- pricepercall + 1
-pricepercall
+pricepercallfinal <- pricepercall + 1
 
 
-profit <- (10 * TP) - (pricepercall * (TP + FP))
 
-profit
-profitnothing
+profit <- (10 * TP) - (pricepercallfinal * (TP + FP))
 
 ## 1000 + (successrate - .11) * 10000 / 1000
 ```
 
-
 Assuming that everyone in our model is responsive, we see: 
 
-- success rate = 97.6%
-- cost per call = $1.10
-- profit = $6590.13
+```{r}
+cat("Success Rate: ", round(newsuccessrate,2), "\n")
+cat("Cost per Call: $", round(pricepercallfinal,2), "\n")
+cat("Profit: $", round(profit,2))
+```
 
 ### KNN with clusters
-knnandkmeans in danielsbranch
 
-- 13 at $ 1315.76
-- 10 at 1359.13
-- 9 at 1490.16
-- 7 at 919$ profit
-- 5 at 1985.85 profit
-- 4 at $ 2232.14
-- 3 at 2216.48 profit
-- 2 at 2193.67
-- therefore profit is inversely correlated with number of clusters
+We also trained KNN based on clusters from Data Exploration section as well. In this approach, we only made predictions about customers who were in the highest propensity cluster. However, this strategy did not perform as well as KNN on its own. 
 
-We also trained KNN using clustering as well. In this approach, we only made predictions about customers who were in the highest propensity cluster. However, this strategy did not perform as well as KNN on its own. 
-
-Code
 ```{r}
 
 tele <- read.csv("tele.csv", stringsAsFactors = TRUE)
@@ -582,9 +536,6 @@ test_data  <- tele_test
 cluster_performance <- tapply(train_labels, train_data$cluster, mean)
 golden_cluster_id <- as.numeric(names(which.max(cluster_performance)))
 
-cat("The Best Cluster is Cluster #", golden_cluster_id, 
-    " with a training success rate of ", round(max(cluster_performance)*100, 2), "%\n")
-
 is_golden_test <- test_data$cluster == golden_cluster_id
 
 test_data_filtered   <- test_data[is_golden_test, ]
@@ -620,29 +571,26 @@ pricepercall <- (1000 / (newrrate + 1000)) + 1
 
 profit <- (10 * TP) - (pricepercall * (TP + FP))
 
-# Results Output
-cat("New Success Rate (Precision):", round(newsuccessrate * 100, 2), "%\n")
-cat("Efficiency Adjusted Price Per Call: $", round(pricepercall, 2), "\n")
-cat("Total Profit from Cluster-Filtered KNN: $", round(profit, 2), "\n")
-
 ```
 
 Using this method, we identify that four clusters at our constant of 18 neighbors was the most profitable: 
-- success rate = 60.2%
-- Cost per call = $1.17
-- profit = $2232.14 dollars.
+
+```{r}
+# Results Output
+cat("Success Rate:", round(newsuccessrate * 100, 2), "%\n")
+cat("Cost Per Call: $", round(pricepercall, 2), "\n")
+cat("Total Profit: $", round(profit, 2), "\n")
+```
 
 Profit appears inversely correlated with the number of clusters as well. As more clusters appear, profits decrease, with an unusual increase and subsequent plateau after eight clusters. We hypothesize that larger clusters may contain a mix of high-propensity and low-propensity customers, and after a certain number of clusters, the algorithm identifies a mostly profitable segment. 
-### SVM with RBF
-svm kernel testing in danielsbranch
 
+### SVM with RBF
 
 Support Vector Machine (SVM) is a supervised algorithm that constructs a maximum-margin plane that separates categories, drawn using linear (vanilla), polynomial (poly), or 3D lines (RBF). In short, SVM finds the best dividing line between customers who buy term deposits and those who don't, making future predictions are more accurate. 
 
 We discovered that SVM using RBF gave us the highest sensitivity amongst the SVM variants. We hypothesize that other variants such as linear (vanilla) were not able to capture the nuances of the data or were not suitable for the specific dataset. 
 
 
-code
 ```{r}
 # my_data <- read.csv("tele.csv")
 
@@ -677,7 +625,7 @@ library(kernlab)
 #besseldotmodel <- ksvm(y ~ ., data = tele_train, kernel = "besseldot")
 #anovadotmodel <- ksvm(y ~ ., data = tele_train, kernel = "anovadot")
 #splinedotmodel <- ksvm(y ~ ., data = tele_train, kernel = "splinedot")
-#rbfdotmodel <- ksvm(y ~ ., data = tele_train, kernel = "rbfdot")
+rbfdotmodel <- ksvm(y ~ ., data = tele_train, kernel = "rbfdot")
 
 #saveRDS(rbfdotmodel, file = "rbf_model.rds")
 #saveRDS(tanhdotmodel, file = "tanhdot.rds")
@@ -688,25 +636,26 @@ library(kernlab)
 #saveRDS(anovadotmodel, file = "anova.rds")
 #saveRDS(splinedotmodel, file = "splinedot.rds")
 
+#loaded_rbf <- readRDS(file = "rbf_model.rds")
+#loaded_tan <- readRDS(file = "tanhdot.rds")
+#loaded_poly <- readRDS(file = "polydot.rds")
+#loaded_vanilla <- readRDS(file = "vanilla.rds")
+#loaded_laplace <- readRDS(file = "laplace.rds")
+#loaded_bessel <- readRDS(file = "bessel.rds")
+#loaded_anova <- readRDS(file = "anova.rds")
+#loaded_spline <- readRDS(file = "splinedot.rds")
 
-loaded_tan <- readRDS(file = "tanhdot.rds")
-loaded_poly <- readRDS(file = "polydot.rds")
-loaded_vanilla <- readRDS(file = "vanilla.rds")
-loaded_laplace <- readRDS(file = "laplace.rds")
-loaded_bessel <- readRDS(file = "bessel.rds")
-loaded_anova <- readRDS(file = "anova.rds")
-loaded_spline <- readRDS(file = "splinedot.rds")
-loaded_rbf <- readRDS(file = "rbf_model.rds")
 
+#tanh_pred <- predict(loaded_tan, tele_test)
+#poly_pred <- predict(loaded_poly, tele_test)
+#v_pred <- predict(loaded_vanilla, tele_test)
+#l_pred <- predict(loaded_laplace, tele_test)
+#b_pred <- predict(loaded_bessel, tele_test)
+#a_pred <- predict(loaded_anova, tele_test)
+#s_pred <- predict(loaded_spline, tele_test)
+#rbf_pred  <- predict(loaded_rbf, tele_test)
 
-tanh_pred <- predict(loaded_tan, tele_test)
-poly_pred <- predict(loaded_poly, tele_test)
-v_pred <- predict(loaded_vanilla, tele_test)
-l_pred <- predict(loaded_laplace, tele_test)
-b_pred <- predict(loaded_bessel, tele_test)
-a_pred <- predict(loaded_anova, tele_test)
-s_pred <- predict(loaded_spline, tele_test)
-rbf_pred  <- predict(loaded_rbf, tele_test)
+rbf_pred  <- predict(rbfdotmodel, tele_test)
 
 
 #table(v_pred, tele_test$y)
@@ -715,13 +664,13 @@ rbf_pred  <- predict(loaded_rbf, tele_test)
 
 ## this time, use confusion matrix because this is a binary prediction
 library(caret)
-confusionMatrix(as.factor(tanh_pred), as.factor(tele_test$y), positive = "yes")
-confusionMatrix(as.factor(poly_pred), as.factor(tele_test$y), positive = "yes")
-confusionMatrix(as.factor(v_pred), as.factor(tele_test$y), positive = "yes")
-confusionMatrix(as.factor(l_pred), as.factor(tele_test$y), positive = "yes")
-confusionMatrix(as.factor(b_pred), as.factor(tele_test$y), positive = "yes")
-confusionMatrix(as.factor(a_pred), as.factor(tele_test$y), positive = "yes")
-confusionMatrix(as.factor(s_pred), as.factor(tele_test$y), positive = "yes")
+#confusionMatrix(as.factor(tanh_pred), as.factor(tele_test$y), positive = "yes")
+#confusionMatrix(as.factor(poly_pred), as.factor(tele_test$y), positive = "yes")
+#confusionMatrix(as.factor(v_pred), as.factor(tele_test$y), positive = "yes")
+#confusionMatrix(as.factor(l_pred), as.factor(tele_test$y), positive = "yes")
+#confusionMatrix(as.factor(b_pred), as.factor(tele_test$y), positive = "yes")
+#confusionMatrix(as.factor(a_pred), as.factor(tele_test$y), positive = "yes")
+#confusionMatrix(as.factor(s_pred), as.factor(tele_test$y), positive = "yes")
 confusionMatrix(as.factor(rbf_pred), as.factor(tele_test$y), positive = "yes")
 ```
        
@@ -732,41 +681,31 @@ TN <- 10815
 TP <- 320
 FP <- 166 
 
-successrate <- (FN + TP) / (FN + TN + TP + FP)
-successrate
+successrate_SVM <- (FN + TP) / (FN + TN + TP + FP)
 
-profitnothing <- (10 * (FN + TP)) - (2 * (TN + TP + FN + FP))
-
-newsuccessrate <- TP / (TP + FP)
-newsuccessrate
-
-diff <- newsuccessrate - successrate
-diff
-
-newrrate <- diff * 10000 
-newrrate
-
-pricepercall <- 1000 / (newrrate + 1000)
-pricepercall <- pricepercall + 1
-pricepercall
+newsuccessrate_SVM <- TP / (TP + FP)
 
 
-profit <- (10 * TP) - (pricepercall * (TP + FP))
+diff_SVM <- newsuccessrate_SVM - successrate_SVM
 
-profit
-profitnothing
+newrrate_SVM <- diff_SVM * 10000 
 
+pricepercall_SVM <- 1000 / (newrrate_SVM + 1000)
+pricepercallfinal_SVM <- pricepercall_SVM + 1
+
+
+profit_SVM <- (10 * TP) - (pricepercall_SVM * (TP + FP))
 ```
-
 
 Using SVM with RBF, we see:
 
-- success rate = 65.8%
-- Cost per call = $1.15
-- profit = $2638.89 dollars.
+```{r}
+cat("Success Rate: ", round(newsuccessrate,2), "\n")
+cat("Cost per Call: $", round(pricepercallfinal,2), "\n")
+cat("Profit: $", round(profit,2))
+```
 
 ### Logistic Regression
-part a in stevenliu branch
 
 Logistic regression models the probability of binary outcomes using the logistic (sigmoid) function, incorporating customer characteristics such as age, job type, and loan status to identify how likely each customer will be responsive.  
 
@@ -820,27 +759,49 @@ whole_training_cost <- 1000
 
 training_cost_per_call <- whole_training_cost/retention_glm
 
-print(training_cost_per_call)
-revenue <- 10*762
-```
-
-```{r}
-cat("Total revenue is:", "$", revenue)
-
-total_cost <- 1801*(1+training_cost_per_call)
-
-
-cat("Total Cost is :", "$", total_cost)
-
-profit <- 10*762 - 1801*(1+training_cost_per_call)
-
-cat("Total Profit is:", "$", profit)
+pricepercallfinal_regression <- 1+training_cost_per_call_regression
+profit_regression <- 10*762 - 1801*(1+training_cost_per_call_regression)
 
 ```
 
 Our fine-tuned logistic regression at a threshold of 0.18 sees: 
-- success rate = 40.3% 
-- cost per call = 1.25
-- profit = 5439.79 
+
+```{r}
+cat("Success Rate: ", "$", success_rate_glm)
+cat("Total Cost:", "$", pricepercallfinal_regression)
+cat("Total Profit:", "$", profit_regression)
+
+```
 
 
+# Conclusion
+
+## Targeting Propensity
+
+After running multiple models, we determine the best model to be KNN, with logistic regression coming in second. Compared to the status quo of: 
+
+- 11% success rate 
+- loss of $35,976
+our strategy results in:
+- over 86% increase in success rate
+- over $6,500 in profit. 
+
+To quantify the "perfect" customer by analyzing the intersections of all characteristics would require intensive computing resources. In lieu of this, we recommend three general characteristics of responsive customers:
+
+- Older in age
+- Repeated previous contact
+- Lower interests rates (<3%)
+
+We encourage 414 Corp to proactively apply these insights to tailor scripts for customers. Being able to anticipate needs allows for personalization of service. Shoe retailer Zappos provides a case study, showing that personalized service using customer history could increase sales 20%+ [HelpSquad](https://helpsquad.com/blog/what-we-learned-zappos-customer-support/). 
+
+## Maintaining Model Value Over Time
+
+This predictive model reflects 414 Corp's current call center customer base. As 414 Corp targets high-propensity customers, nuanced characteristic dynamics will emerge and affect the accurateness of the model. To prevent model decay, 414 Corp should retrain the model annually using fresh data and monitor key performance metrics like responsiveness. 
+
+## Wrap Up
+
+While implementation of this strategy is financially valid, we encourage supervisors to temporarily increase availability of open-door office hours, allowing employees to ask questions and submit feedback regarding the strategy. 
+
+Additionally, we encourage implementing wellness events to combat the current atmosphere of the call center. As success rates improve, workers would likely develop more positive interpersonal relationships with each other, but we understand that results may not come immediately. Starting strong would give 414 Corp the best foundational for long-term success of this strategy. 
+
+More resources focused on employee well-being could unlock greater opportunities for both business and employee longevity. We believe our recommendations based upon our models will greatly improve the performance of 414 Corp.
