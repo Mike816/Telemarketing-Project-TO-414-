@@ -767,7 +767,7 @@ profit_regression <- 10*762 - 1801*(1+training_cost_per_call_regression)
 The model performance was evaluated with a confusion matrix. Using the given data, including the training cost per call, static cost per call, and the true results of the testing data, we were able to calculate the projected profits at each threshold for the model. Iterating through this process led us to an optimal classification threshold of 0.18, with the following results:
 
 ```{r}
-cat("Success Rate: ", "$", success_rate_glm)
+cat("Success Rate: ", success_rate_glm)
 cat("Total Cost:", "$", pricepercallfinal_regression)
 cat("Total Profit:", "$", profit_regression)
 
